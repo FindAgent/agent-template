@@ -52,14 +52,20 @@ def problems() -> list[str]:
         skills = manifest.get("skills")
         if not isinstance(skills, list) or len(skills) != 7:
             found.append(f"{variant}/findagent.json skills[] must list the seven tools")
-    if (ROOT / "node" / "ui" / "index.html").read_bytes() != (ROOT / "python" / "ui" / "index.html").read_bytes():
+    if not same_text(ROOT / "node" / "ui" / "index.html", ROOT / "python" / "ui" / "index.html"):
         found.append("the built panel (ui/index.html) differs between variants")
     for name in ("LICENSE",):
-        if (ROOT / "node" / name).read_bytes() != (ROOT / name).read_bytes():
+        if not same_text(ROOT / "node" / name, ROOT / name):
             found.append(f"node/{name} differs from the root {name}")
-        if (ROOT / "python" / name).read_bytes() != (ROOT / name).read_bytes():
+        if not same_text(ROOT / "python" / name, ROOT / name):
             found.append(f"python/{name} differs from the root {name}")
     return found
+
+
+def same_text(a: Path, b: Path) -> bool:
+    """Equal content regardless of line endings: a Windows checkout rewrites them, the blobs do not differ."""
+    crlf, lf = bytes([13, 10]), bytes([10])
+    return a.read_bytes().replace(crlf, lf) == b.read_bytes().replace(crlf, lf)
 
 
 def main() -> int:
