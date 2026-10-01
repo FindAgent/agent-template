@@ -106,6 +106,9 @@ def main() -> int:
     for rel, content in sync_mcp_configs.render(dest).items():
         write(dest, rel, content)
 
+    if not (dest / ".git").exists():
+        subprocess.call(["git", "init", "-q", str(dest)])
+
     checker = ROOT / "scripts" / "check_repo_files.py"
     return subprocess.call([sys.executable, str(checker), str(dest), "--runtime", variant])
 

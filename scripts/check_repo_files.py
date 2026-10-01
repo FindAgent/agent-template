@@ -8,6 +8,7 @@ Read-only. Exit code 1 when anything required is missing.
 """
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -59,6 +60,14 @@ def main() -> int:
     built = entry and entry.split("/")[0] in ("dist", "build", "out")
     if entry and not built and not (root / entry).exists():
         problems.append(f"findagent.json entrypoint not found: {entry}")
+
+    # A file the .gitignore hides is a file that never reaches the repository.
+    if (root / ".git").exists():
+        for rel in LIST["all"] + LIST[runtime]:
+            if (root / rel).exists() and subprocess.run(
+                ["git", "-C", str(root), "check-ignore", "-q", rel], capture_output=True
+            ).returncode == 0:
+                problems.append(f"ignored by .gitignore (would never be committed): {rel}")
 
     for p in problems:
         print(f"FAIL {p}")
