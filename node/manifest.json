@@ -9,10 +9,10 @@
     "name": "FindAgent",
     "url": "https://findagent.cloud"
   },
-  "homepage": "https://github.com/Kata-Agents/agent-template",
+  "homepage": "https://github.com/FindAgent/agent-template",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Kata-Agents/agent-template"
+    "url": "https://github.com/FindAgent/agent-template"
   },
   "license": "MIT",
   "keywords": [

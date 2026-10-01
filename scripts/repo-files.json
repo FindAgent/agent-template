@@ -1,0 +1,30 @@
+{
+  "$comment": "The one definition of a complete code-agent repository. scripts/init_agent.py creates these, scripts/check_repo_files.py verifies them.",
+  "all": [
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    ".gitignore",
+    ".gitattributes",
+    "findagent.json",
+    "manifest.json",
+    "mcp.json",
+    ".mcp.json",
+    ".cursor/mcp.json",
+    ".vscode/mcp.json",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "CONVENTIONS.md",
+    ".aider.conf.yml",
+    ".github/copilot-instructions.md",
+    ".cursor/rules/findagent-code-agent.mdc",
+    ".github/workflows/ci.yml"
+  ],
+  "node": ["package.json", "tsconfig.json", "eslint.config.js"],
+  "node_one_of": [["pnpm-lock.yaml", "package-lock.json", "yarn.lock"]],
+  "python": ["pyproject.toml", "requirements.txt", "requirements-dev.txt"],
+  "json_files": ["findagent.json", "manifest.json", "mcp.json", ".mcp.json", ".cursor/mcp.json", ".vscode/mcp.json"],
+  "dirs_with_files": {"tests_or_test": ["tests", "test"]}
+}

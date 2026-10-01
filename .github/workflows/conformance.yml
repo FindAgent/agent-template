@@ -22,3 +22,7 @@ jobs:
           python-version: "3.13"
       - run: python scripts/check_conformance.py
       - run: python scripts/sync_mcp_configs.py --check
+      - name: A scaffolded repo of each variant is complete
+        run: |
+          python scripts/init_agent.py python "$RUNNER_TEMP/py-agent" --name "CI Python"
+          python scripts/init_agent.py node "$RUNNER_TEMP/node-agent" --name "CI Node"

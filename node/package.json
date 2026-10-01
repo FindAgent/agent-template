@@ -9,9 +9,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Kata-Agents/agent-template"
+    "url": "https://github.com/FindAgent/agent-template"
   },
-  "homepage": "https://github.com/Kata-Agents/agent-template#readme",
+  "homepage": "https://github.com/FindAgent/agent-template#readme",
   "type": "module",
   "main": "dist/mcp/server.js",
   "bin": {

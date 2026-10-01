@@ -7,7 +7,7 @@ license = { text = "MIT" }
 authors = [{ name = "FindAgent" }]
 
 [project.urls]
-Repository = "https://github.com/Kata-Agents/agent-template"
+Repository = "https://github.com/FindAgent/agent-template"
 
 [tool.ruff]
 line-length = 120

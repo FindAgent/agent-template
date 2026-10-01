@@ -29,3 +29,7 @@ You were pointed at this repo to produce a **code agent** for the FindAgent mark
    `mcp` in `findagent.json`; never edit them by hand. To submit over MCP instead of the web, connect the
    FindAgent platform MCP (`https://mcp.findagent.cloud/mcp`) and use `findagent_create_code_draft`; the
    provider-neutral playbooks are at https://github.com/FindAgent/agent-creators.
+
+8. **Start a complete repo in one command**: `python scripts/init_agent.py <node|python> <dir> --name "My Agent"` copies a variant and
+   adds every file a complete agent repo carries (assistant entry files, SECURITY.md, CHANGELOG.md, CI, DXT manifest, MCP configs);
+   `python scripts/check_repo_files.py <dir>` verifies it. The list is `scripts/repo-files.json`.
