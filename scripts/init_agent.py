@@ -1,6 +1,7 @@
 """Create a complete code-agent repository from a variant of this template.
 
     python scripts/init_agent.py <node|python> <destination-dir> [--name "My Agent"] [--slug my-agent]
+    python scripts/init_agent.py --fill <existing-agent-repo>   # add only what is missing
 
 Copies the variant as the new repository root and adds everything a complete agent repo carries
 (scripts/repo-files.json is the one list): the assistant entry files (AGENTS.md, CLAUDE.md,
@@ -42,21 +43,33 @@ def ci_workflow(variant: str) -> str:
 
 
 def main() -> int:
-    pos = [a for a in sys.argv[1:] if not a.startswith("--")]
-    if len(pos) < 2 or pos[0] not in ("node", "python"):
-        print(__doc__)
-        return 2
-    variant, dest = pos[0], Path(pos[1]).resolve()
-    if dest.exists() and any(dest.iterdir()):
-        print(f"refusing: {dest} is not empty", file=sys.stderr)
-        return 2
-    shutil.copytree(ROOT / variant, dest, ignore=SKIP, dirs_exist_ok=True)
+    pos = [a for a in sys.argv[1:] if not a.startswith("--") and a not in (arg("--name", ""), arg("--slug", ""))]
+    fill = "--fill" in sys.argv
+
+    if fill:
+        if len(pos) != 1 or not (Path(pos[0]) / "findagent.json").exists():
+            print(__doc__)
+            return 2
+        dest = Path(pos[0]).resolve()
+        kind = (json.loads((dest / "findagent.json").read_text(encoding="utf-8")).get("runtime") or {}).get("kind")
+        variant = "python" if kind == "python" else "node"
+    else:
+        if len(pos) < 2 or pos[0] not in ("node", "python"):
+            print(__doc__)
+            return 2
+        variant, dest = pos[0], Path(pos[1]).resolve()
+        if dest.exists() and any(dest.iterdir()):
+            print(f"refusing: {dest} is not empty", file=sys.stderr)
+            return 2
+        shutil.copytree(ROOT / variant, dest, ignore=SKIP, dirs_exist_ok=True)
 
     manifest = json.loads((dest / "findagent.json").read_text(encoding="utf-8"))
     name = arg("--name", manifest.get("name", "My agent"))
     slug = arg("--slug", re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-"))
-    manifest["name"] = name
-    (dest / "findagent.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+    if not fill:
+        manifest["name"] = name
+        (dest / "findagent.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
 
     if variant == "python":
         server = manifest["mcp"]
