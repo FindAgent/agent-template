@@ -21,3 +21,4 @@ jobs:
         with:
           python-version: "3.13"
       - run: python scripts/check_conformance.py
+      - run: python scripts/sync_mcp_configs.py --check

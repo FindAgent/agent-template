@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "agent-template": {
+      "command": "node",
+      "args": [
+        "dist/mcp/server.js"
+      ]
+    }
+  }
+}

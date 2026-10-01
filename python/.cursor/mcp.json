@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "agent-template": {
+      "command": "python3",
+      "args": [
+        "server.py"
+      ]
+    }
+  }
+}

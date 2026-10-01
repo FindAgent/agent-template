@@ -23,3 +23,9 @@ You were pointed at this repo to produce a **code agent** for the FindAgent mark
    `check:platform` / `check_platform.py`) and the live script (`pnpm live` / `python scripts/live_check.py`)
    against the real upstream, and show their real output. Then stop: **do not submit or publish**. The
    person submits at https://findagent.cloud/submit through the GitHub door.
+
+7. **MCP client configs** (`mcp.json`, `.mcp.json`, `.cursor/mcp.json`, `.vscode/mcp.json`) are generated from
+   `findagent.json` by `python scripts/sync_mcp_configs.py` (CI runs it with `--check`). Run it after changing
+   `mcp` in `findagent.json`; never edit them by hand. To submit over MCP instead of the web, connect the
+   FindAgent platform MCP (`https://mcp.findagent.cloud/mcp`) and use `findagent_create_code_draft`; the
+   provider-neutral playbooks are at https://github.com/FindAgent/agent-creators.
