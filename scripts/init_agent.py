@@ -33,13 +33,8 @@ def write(dest: Path, rel: str, text: str) -> None:
     path.write_text(text, encoding="utf-8", newline="\n")
 
 
-def ci_workflow(variant: str) -> str:
-    text = (ROOT / ".github" / "workflows" / f"{variant}.yml").read_text(encoding="utf-8")
-    text = re.sub(r"\n    paths: \[[^\n]*\]", "", text)
-    text = re.sub(r"\n    defaults:\n      run:\n        working-directory: \w+", "", text)
-    text = re.sub(r"# Copying[^\n]*\n#[^\n]*\n", "", text)
-    text = text.replace(f"working-directory: {variant}/", "").replace(f"{variant}/", "")
-    return text.replace(f"name: {variant.capitalize()} agent", "name: CI", 1)
+sys.path.insert(0, str(ROOT / "scripts"))
+from ci_workflow import ci_workflow  # noqa: E402
 
 
 def main() -> int:
@@ -110,7 +105,9 @@ def main() -> int:
           f"# Security\n\nReport a vulnerability privately to the maintainers of {name} (use the repository's security advisory "
           "form). Do not open a public issue for a vulnerability. Never include a real credential in a report.\n")
     write(dest, "CHANGELOG.md", f"# Changelog\n\n## {manifest.get('version', '0.1.0')}\n\n- Initial release.\n")
-    write(dest, ".github/workflows/ci.yml", ci_workflow(variant))
+    write(dest, ".github/workflows/ci.yml", ci_workflow(variant, dest, ROOT))
+    for name in ("check_repo_files.py", "repo-files.json"):
+        write(dest, f"scripts/{name}", (ROOT / "scripts" / name).read_text(encoding="utf-8"))
 
     # Generate the MCP client configs from findagent.json with the same function the template uses.
     sys.path.insert(0, str(ROOT / "scripts"))
