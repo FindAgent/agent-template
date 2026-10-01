@@ -1,0 +1,56 @@
+{
+  "name": "agent-template",
+  "version": "0.3.0",
+  "description": "FindAgent code-bundle template: a real Rust crate health check wired with the platform's six entry tools, a findagent.json, a result panel and the gates that keep them honest.",
+  "license": "MIT",
+  "author": {
+    "name": "FindAgent",
+    "url": "https://findagent.cloud"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kata-Agents/agent-template"
+  },
+  "homepage": "https://github.com/Kata-Agents/agent-template#readme",
+  "type": "module",
+  "main": "dist/mcp/server.js",
+  "bin": {
+    "agent-template": "dist/mcp/server.js"
+  },
+  "scripts": {
+    "build": "tsc && node scripts/build-panel.mjs",
+    "start": "node dist/mcp/server.js",
+    "dev": "tsx src/mcp/server.ts",
+    "test": "pnpm run build && vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/*.mjs\" \"panel/*\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"scripts/*.mjs\" \"panel/*\"",
+    "sync:manifest": "node scripts/sync-manifest.mjs",
+    "check:generated": "node scripts/sync-manifest.mjs --check && node scripts/build-panel.mjs --check",
+    "live": "node scripts/live-check.mjs",
+    "mcp:inspect": "npx @modelcontextprotocol/inspector node dist/mcp/server.js",
+    "check:platform": "node scripts/check-platform.mjs",
+    "validate:manifest": "node scripts/validate-findagent-json.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1",
+    "@types/node": "22.20.4",
+    "@typescript-eslint/eslint-plugin": "8.71.0",
+    "@typescript-eslint/parser": "8.71.0",
+    "eslint": "10.11.0",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "2.1.9",
+    "yaml": "2.9.1"
+  }
+}

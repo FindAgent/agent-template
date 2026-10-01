@@ -1,0 +1,7 @@
+dist/
+node_modules/
+pnpm-lock.yaml
+ui/
+findagent.json
+manifest.json
+panel/template.html

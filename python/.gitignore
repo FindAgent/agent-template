@@ -1,0 +1,22 @@
+# Local environment and the vendored dependencies: the sandbox installs these itself.
+.venv/
+.findagent_pydeps/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment and secrets: never commit these.
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Editors and OS files.
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,234 @@
+:root {
+  color-scheme: dark light;
+  --pc-bg: #0b0b0d;
+  --pc-surface: #17171a;
+  --pc-surface-2: #1f1f23;
+  --pc-line: rgba(244, 245, 248, 0.14);
+  --pc-fg: #f4f5f8;
+  --pc-fg-muted: #a6abbb;
+  --pc-accent: #8e86ff;
+  --pc-accent-ink: #14112e;
+  --pc-good: #7fe2bc;
+  --pc-good-soft: rgba(127, 226, 188, 0.12);
+  --pc-warn: #fcd34d;
+  --pc-warn-soft: rgba(252, 211, 77, 0.12);
+  --pc-danger: #f3a796;
+  --pc-danger-soft: rgba(243, 167, 150, 0.12);
+  --pc-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  --pc-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --pc-bg: #f8f8ff;
+    --pc-surface: #ffffff;
+    --pc-surface-2: #f3f3fb;
+    --pc-line: rgba(21, 21, 29, 0.14);
+    --pc-fg: #15151d;
+    --pc-fg-muted: #4a4a5e;
+    --pc-accent: #4f46e5;
+    --pc-accent-ink: #ffffff;
+    --pc-good: #06543d;
+    --pc-good-soft: rgba(6, 84, 61, 0.1);
+    --pc-warn: #92400e;
+    --pc-warn-soft: rgba(146, 64, 14, 0.1);
+    --pc-danger: #7b2a1a;
+    --pc-danger-soft: rgba(123, 42, 26, 0.1);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+}
+body {
+  background: var(--pc-bg);
+  color: var(--pc-fg);
+  font-family: var(--pc-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 12px 14px 16px;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+#root {
+  display: block;
+  max-width: 720px;
+  margin: 0 auto;
+}
+p {
+  margin: 0;
+}
+h1,
+h2 {
+  margin: 0;
+  font-weight: 650;
+}
+h1 {
+  font-size: 17px;
+}
+h2 {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--pc-fg-muted);
+  margin-bottom: 8px;
+}
+code,
+.pc-code {
+  font-family: var(--pc-mono);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.pc-empty {
+  color: var(--pc-fg-muted);
+  padding: 24px 0;
+}
+.pc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin-bottom: 10px;
+}
+.pc-head .pc-pkg {
+  overflow-wrap: anywhere;
+}
+.pc-card {
+  background: var(--pc-surface);
+  border: 1px solid var(--pc-line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.pc-sub {
+  color: var(--pc-fg-muted);
+}
+
+.pc-chip {
+  display: inline-block;
+  padding: 1px 9px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.pc-chip.good {
+  color: var(--pc-good);
+  background: var(--pc-good-soft);
+}
+.pc-chip.warn {
+  color: var(--pc-warn);
+  background: var(--pc-warn-soft);
+}
+.pc-chip.bad {
+  color: var(--pc-danger);
+  background: var(--pc-danger-soft);
+}
+.pc-chip.mute {
+  color: var(--pc-fg-muted);
+}
+
+.pc-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-bottom: 6px;
+}
+.pc-signals {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pc-signals li {
+  border-top: 1px solid var(--pc-line);
+}
+.pc-signals li:first-child {
+  border-top: 0;
+}
+.pc-signals summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 2px;
+  cursor: pointer;
+  list-style: none;
+}
+.pc-signals summary::-webkit-details-marker {
+  display: none;
+}
+.pc-signals .pc-name {
+  overflow-wrap: anywhere;
+}
+.pc-signals .pc-body {
+  padding: 0 2px 10px;
+  color: var(--pc-fg-muted);
+}
+.pc-signals .pc-body p + p {
+  margin-top: 4px;
+}
+
+button {
+  font: inherit;
+  min-height: 40px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--pc-line);
+  background: var(--pc-accent);
+  color: var(--pc-accent-ink);
+  font-weight: 600;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+:focus-visible {
+  outline: 2px solid var(--pc-accent);
+  outline-offset: 2px;
+}
+.pc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 4px;
+}
+.pc-status {
+  color: var(--pc-fg-muted);
+  min-height: 1.5em;
+}
+.pc-fallback {
+  background: var(--pc-surface-2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 6px;
+  user-select: all;
+}
+.pc-foot {
+  color: var(--pc-fg-muted);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+.pc-questions {
+  margin: 0;
+  padding-left: 18px;
+}
+.pc-questions li {
+  margin-bottom: 4px;
+}

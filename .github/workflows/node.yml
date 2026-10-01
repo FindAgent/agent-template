@@ -1,0 +1,56 @@
+name: Node agent
+
+# Every step is one of the gates described in node/README.md. Nothing here needs a secret.
+# Copying node/ out as your own repo? Move this file to .github/workflows/ci.yml and delete the
+# `defaults` block and the `paths` filters.
+
+on:
+  push:
+    branches: [main]
+    paths: ["node/**", ".github/workflows/node.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["node/**", ".github/workflows/node.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: node-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      pnpm_config_strict_dep_builds: "false"
+    defaults:
+      run:
+        working-directory: node
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.0.8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: node/pnpm-lock.yaml
+      - name: Install (the lockfile must match package.json)
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Format
+        run: pnpm format:check
+      - name: Chromium for the panel tests
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Build and test
+        run: pnpm test
+      - name: Generated files are current
+        run: pnpm check:generated
+      - name: Platform rules
+        run: pnpm check:platform

@@ -1,0 +1,77 @@
+{
+  "dxt_version": "0.1",
+  "name": "agent-template",
+  "display_name": "Agent Template",
+  "version": "0.3.0",
+  "description": "A working Rust crate lookup that doubles as the reference shape for a FindAgent code agent.",
+  "long_description": "Give it a Rust crate name and it reads crates.io live: how long ago the latest version was published, whether that version was yanked, whether a source repository is linked, how many downloads it had in the last 90 days and how many owners can publish it. Each signal states the rule and the API field behind it, and the answer is a verdict: healthy, watch, risky or unknown. A signal crates.io would not answer is shown as not checked with the reason, never scored as zero, and a missing crate, a rate limit (with the reset time when crates.io gives one), a timeout, a network failure and a malformed answer are each reported as what they are. The result is deterministic and complete without a language model, and it also renders as a panel inside the chat. This repository is the template that new FindAgent code agents are copied from: replace the crate lookup with your own domain and keep the entry tools, the manifest and the checks.",
+  "author": {
+    "name": "FindAgent",
+    "url": "https://findagent.cloud"
+  },
+  "homepage": "https://github.com/Kata-Agents/agent-template",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kata-Agents/agent-template"
+  },
+  "license": "MIT",
+  "keywords": [
+    "software-development",
+    "dependency-supply-chain",
+    "rust",
+    "crates",
+    "dependencies",
+    "template"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/mcp/server.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/mcp/server.js"
+      ]
+    }
+  },
+  "tools": [
+    {
+      "name": "open_form",
+      "description": "Use this the moment the user wants a Rust crate checked. It returns the questions to ask (the crate name, whether to include owners) so a form can be shown. Do NOT run a check before calling this; the form is the entry point."
+    },
+    {
+      "name": "run_form",
+      "description": "Internal: invoked when the user submits the form opened by open_form. Not for direct use."
+    },
+    {
+      "name": "run_full",
+      "description": "Run the whole check end to end for one crate on crates.io: latest release age, yanked, license, source repository, recent downloads and owners, each with the rule and the API field behind it, then a verdict (healthy, watch, risky or unknown) with the reason. Use when the user names a crate and wants the full answer. Missing the crate name, it asks for it instead of failing."
+    },
+    {
+      "name": "check_crate",
+      "description": "Check ONE crate from live crates.io data and return its signals and verdict. Same result as run_full; use it when the crate is already known and no form is needed. Reports a missing or unreachable crate as exactly that, never as a clean result."
+    },
+    {
+      "name": "list_capabilities",
+      "description": "List what this agent checks, the rule and API field behind each signal, its request budget and its limits. Use for discovery before running a check."
+    },
+    {
+      "name": "plan_inputs",
+      "description": "Plan the inputs for a tool before running it: returns the questions, the schema and a ready-to-edit example. Use when the user is unsure what to provide."
+    },
+    {
+      "name": "discover_intent",
+      "description": "Use when the user states a goal in their own words ('is this crate still maintained?'). It restates the goal, asks the few questions that pin the input down and proposes a ready-to-run input to confirm before running."
+    }
+  ],
+  "tools_generated": false,
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "linux",
+      "win32"
+    ],
+    "runtimes": {
+      "node": ">=20"
+    }
+  }
+}

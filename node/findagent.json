@@ -1,0 +1,171 @@
+{
+  "schema_version": "1.2",
+  "kind": "code-bundle",
+  "name": "Agent Template",
+  "version": "0.3.0",
+  "tagline": "A working Rust crate lookup that doubles as the reference shape for a FindAgent code agent.",
+  "description": "Give it a Rust crate name and it reads crates.io live: how long ago the latest version was published, whether that version was yanked, whether a source repository is linked, how many downloads it had in the last 90 days and how many owners can publish it. Each signal states the rule and the API field behind it, and the answer is a verdict: healthy, watch, risky or unknown. A signal crates.io would not answer is shown as not checked with the reason, never scored as zero, and a missing crate, a rate limit (with the reset time when crates.io gives one), a timeout, a network failure and a malformed answer are each reported as what they are. The result is deterministic and complete without a language model, and it also renders as a panel inside the chat. This repository is the template that new FindAgent code agents are copied from: replace the crate lookup with your own domain and keep the entry tools, the manifest and the checks.",
+  "example_prompts": [
+    "Is serde still maintained?",
+    "Check tokio before I depend on it.",
+    "Is the latest version of rand yanked, and who owns it?"
+  ],
+  "tags": [
+    "software-development",
+    "dependency-supply-chain",
+    "rust",
+    "crates",
+    "dependencies",
+    "template"
+  ],
+  "discipline": "software-development",
+  "category": "Dependency & Supply-Chain",
+  "entrypoint": {
+    "path": "dist/mcp/server.js"
+  },
+  "runtime": {
+    "kind": "node",
+    "version": "22"
+  },
+  "build_command": "npm run build",
+  "allowed_hosts": [
+    "crates.io"
+  ],
+  "serve": [
+    "hosted"
+  ],
+  "mcp": {
+    "mode": "native",
+    "command": "node",
+    "args": [
+      "dist/mcp/server.js"
+    ]
+  },
+  "skills": [
+    {
+      "id": "open_form",
+      "name": "open_form",
+      "description": "Use this the moment the user wants a Rust crate checked. It returns the questions to ask (the crate name, whether to include owners) so a form can be shown. Do NOT run a check before calling this; the form is the entry point.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": "run_form",
+      "name": "run_form",
+      "description": "Internal: invoked when the user submits the form opened by open_form. Not for direct use.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "crate": {
+            "type": "string",
+            "description": "A crate name as published on crates.io, for example serde or tokio. Case does not matter."
+          },
+          "owners": {
+            "type": "boolean",
+            "description": "Whether to also read the owners list. It costs one extra request; when it fails the check still completes and says the signal was not checked. Default true."
+          }
+        }
+      }
+    },
+    {
+      "id": "run_full",
+      "name": "run_full",
+      "description": "Run the whole check end to end for one crate on crates.io: latest release age, yanked, license, source repository, recent downloads and owners, each with the rule and the API field behind it, then a verdict (healthy, watch, risky or unknown) with the reason. Use when the user names a crate and wants the full answer. Missing the crate name, it asks for it instead of failing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "crate": {
+            "type": "string",
+            "description": "A crate name as published on crates.io, for example serde or tokio. Case does not matter."
+          },
+          "owners": {
+            "type": "boolean",
+            "description": "Whether to also read the owners list. It costs one extra request; when it fails the check still completes and says the signal was not checked. Default true."
+          }
+        }
+      }
+    },
+    {
+      "id": "check_crate",
+      "name": "check_crate",
+      "description": "Check ONE crate from live crates.io data and return its signals and verdict. Same result as run_full; use it when the crate is already known and no form is needed. Reports a missing or unreachable crate as exactly that, never as a clean result.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "crate": {
+            "type": "string",
+            "description": "A crate name as published on crates.io, for example serde or tokio. Case does not matter."
+          },
+          "owners": {
+            "type": "boolean",
+            "description": "Whether to also read the owners list. It costs one extra request; when it fails the check still completes and says the signal was not checked. Default true."
+          }
+        },
+        "required": [
+          "crate"
+        ]
+      }
+    },
+    {
+      "id": "list_capabilities",
+      "name": "list_capabilities",
+      "description": "List what this agent checks, the rule and API field behind each signal, its request budget and its limits. Use for discovery before running a check.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": "plan_inputs",
+      "name": "plan_inputs",
+      "description": "Plan the inputs for a tool before running it: returns the questions, the schema and a ready-to-edit example. Use when the user is unsure what to provide.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string",
+            "description": "Which tool to plan inputs for (run_full or check_crate)."
+          },
+          "goal": {
+            "type": "string",
+            "description": "Optional freeform goal."
+          },
+          "provided": {
+            "type": "object",
+            "description": "Optional partial arguments already known."
+          }
+        }
+      }
+    },
+    {
+      "id": "discover_intent",
+      "name": "discover_intent",
+      "description": "Use when the user states a goal in their own words ('is this crate still maintained?'). It restates the goal, asks the few questions that pin the input down and proposes a ready-to-run input to confirm before running.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "goal": {
+            "type": "string",
+            "description": "What the user wants to find out about a crate."
+          },
+          "tool": {
+            "type": "string",
+            "description": "Which tool to plan for. Defaults to run_full."
+          },
+          "provided": {
+            "type": "object",
+            "description": "Optional partial args already known."
+          }
+        },
+        "required": [
+          "goal"
+        ]
+      }
+    }
+  ],
+  "ui": {
+    "path": "ui/index.html"
+  }
+}

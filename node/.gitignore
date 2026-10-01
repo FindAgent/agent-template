@@ -1,0 +1,36 @@
+# Dependencies — pnpm-lock.yaml IS committed so CI can use --frozen-lockfile
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Lint/format caches
+.eslintcache
+.prettiercache
+
+# Environment & secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Local pnpm build-script approval (allowBuilds). Never commit: FindAgent derives
+# workspace globs from this file, so a committed one makes the platform read a
+# single-package agent as a memberless monorepo and the autobuild fails.
+pnpm-workspace.yaml
