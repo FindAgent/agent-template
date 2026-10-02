@@ -107,7 +107,7 @@ def main() -> int:
         "- `skills[]` lists every tool (at most 40), each description at most 500 characters because the served tool list cuts there. "
         "`runtime.version` is 22 or 24 (Node) or 3.13 (Python).\n"
         "- After changing `mcp` in `findagent.json`, run `python scripts/sync_mcp_configs.py` if present, or regenerate the MCP configs.\n"
-        "- Optional agent memory: read `FINDAGENT_MEMORY_FILE` first (a path relative to the working directory, JSON text); "
+        "- Optional agent memory: when `FINDAGENT_MEMORY_FILE` is set, read it first (a path relative to the working directory, JSON text; unset means no memory); "
         "`FINDAGENT_MEMORY` is only a fallback and is absent for large memory (the sandbox env is capped at 4096 bytes; credentials and "
         "platform variables above about 4000 bytes are refused as `code_bundle_env_too_large`). Return new state under `__memory` "
         "(under 64 KB or the write is rejected and the old memory kept; bounded caches; one user and one agent, hosted runs only, never a secret).\n"
