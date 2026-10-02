@@ -42,8 +42,9 @@ You were pointed at this repo to produce a **code agent** for the FindAgent mark
    `skills[]` ids and typed `input_schema` you declare in `findagent.json`; still keep `manifest.json` in step
    (`sync:manifest`) and read the stored tool list once after a re-pull.
 
-10. **Agent memory** is optional. A hosted run delivers the previous state as a file: read
-    `FINDAGENT_MEMORY_FILE` first (a path relative to the working directory; the file holds the JSON text).
+10. **Agent memory** is optional. A hosted run delivers the previous state as a file: when
+    `FINDAGENT_MEMORY_FILE` is set, read it first (a path relative to the working directory; the file holds the JSON
+    text; it is not set on a first run or when the memory is empty, so treat a missing variable as no memory).
     `FINDAGENT_MEMORY` (the same JSON as an environment variable) is only a fallback and is ABSENT when the
     memory is large, because the sandbox environment has a hard 4096-byte limit (credentials and platform
     variables are refused above about 4000 bytes with the creator-facing reason `code_bundle_env_too_large`).

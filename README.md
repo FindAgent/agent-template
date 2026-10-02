@@ -146,7 +146,8 @@ declare no slot at all.
 
 A hosted run can keep a small amount of state per buyer and per agent. The platform writes the stored JSON
 to a file in the working directory and names it in the environment variable `FINDAGENT_MEMORY_FILE` (a path
-relative to the working directory, JSON text inside): **read that file first**. `FINDAGENT_MEMORY` (the same
+relative to the working directory, JSON text inside): **read that file first when the variable is set** (it is
+not set on a first run or when the memory is empty, so treat a missing variable as no memory). `FINDAGENT_MEMORY` (the same
 JSON as an environment variable) is only a fallback and is **absent when the memory is large**, because the
 sandbox environment has a hard limit of 4096 bytes in total: credentials and platform variables above about
 4000 bytes are refused before the sandbox starts, with the creator-facing reason `code_bundle_env_too_large`.
