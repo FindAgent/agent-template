@@ -15,6 +15,8 @@ You were pointed at this repo to produce a **code agent** for the FindAgent mark
    `python scripts/sync_manifest.py`), set `allowed_hosts` to exactly the hosts the new code calls, and
    write a real `description`, `tagline`, 1 to 5 `example_prompts` and `tags` that include
    `software-development`. Avoid health, monitor, compliance and license-type words in tags.
+   Keep each tool description at most 500 characters (the served tool list cuts there), at most 40
+   tools, and `runtime.version` `22` or `24` (Node) or `3.13` (Python).
 5. **Rules that must never be broken**: no secret in any file, no private-key armor, no URL taken from a
    caller, no network from the panel, no `tools/call` from the panel, no `print()` to stdout in Python,
    no sample data, no demo mode, no unfinished-work markers in shipped code. A failure is never reported
@@ -33,3 +35,16 @@ You were pointed at this repo to produce a **code agent** for the FindAgent mark
 8. **Start a complete repo in one command**: `python scripts/init_agent.py <node|python> <dir> --name "My Agent"` copies a variant and
    adds every file a complete agent repo carries (assistant entry files, SECURITY.md, CHANGELOG.md, CI, DXT manifest, MCP configs);
    `python scripts/check_repo_files.py <dir>` verifies it. The list is `scripts/repo-files.json`.
+
+9. **Install and versions.** The platform sandbox installs with npm and ignores `pnpm-lock.yaml`, so pin exact
+   versions in `package.json`; keep `build_command` as `npm run build`. A published agent is updated by a
+   re-pull (`findagent_new_version` over MCP, patch bump unless `bump` says otherwise); a re-pull rebuilds
+   `skills[]` from `manifest.json`, so keep the two in step with `sync:manifest`.
+
+10. **Agent memory** is optional: the previous state arrives in the environment variable `FINDAGENT_MEMORY`
+    (JSON) and new state is returned as an object under `__memory` in the structured result (64 KB at most,
+    one user and one agent, hosted runs only, never a secret).
+
+11. **Say what you ran.** In your hand-off name the assistant and tools you used and every gate you actually
+    executed; write "not checked: <reason>" for anything you did not run. The template's own README lists
+    which assistants it has been exercised with.

@@ -166,6 +166,26 @@ describe("(a) findagent.json is the contract and lists every tool", () => {
     expectError("skill_incomplete", (d) =>
       editJson(d, "findagent.json", (j) => (j.skills[0].description = "")),
     ));
+  it("a tool description the served list would cut at 500 characters", () =>
+    expectError("skill_description_cut", (d) =>
+      editJson(d, "findagent.json", (j) => (j.skills[0].description = "x".repeat(501))),
+    ));
+  it("a description of exactly 500 characters is not cut", async () => {
+    const dir = copyRepo();
+    editJson(dir, "findagent.json", (j) => (j.skills[0].description = "x".repeat(500)));
+    expect(errors(await run(dir))).not.toContain("skill_description_cut");
+  });
+  it("more than 40 skills", () =>
+    expectError("skills_too_many", (d) =>
+      editJson(d, "findagent.json", (j) => {
+        for (let i = 0; i < 40; i++)
+          j.skills.push({ id: `extra_${i}`, name: `extra_${i}`, description: "x".repeat(50) });
+      }),
+    ));
+  it("an input_schema that is not an object schema", () =>
+    expectError("skill_schema_type", (d) =>
+      editJson(d, "findagent.json", (j) => (j.skills[0].input_schema = { type: "array" })),
+    ));
   it("a skill whose id and name differ", () =>
     expectError("skill_id_mismatch", (d) =>
       editJson(d, "findagent.json", (j) => (j.skills[0].name = "other")),
@@ -408,6 +428,28 @@ describe("(e) the build passes on the sandbox", () => {
     expectError("runtime_version", (d) =>
       editJson(d, "findagent.json", (j) => (j.runtime.version = "18")),
     ));
+  it("Node 20 is not a sandbox runtime either", () =>
+    expectError("runtime_version", (d) =>
+      editJson(d, "findagent.json", (j) => (j.runtime.version = "20")),
+    ));
+  it("both Node versions the sandbox runs are accepted", async () => {
+    for (const version of ["22", "24"]) {
+      const dir = copyRepo();
+      editJson(dir, "findagent.json", (j) => (j.runtime.version = version));
+      expect(errors(await run(dir)), version).toEqual([]);
+    }
+  });
+  it("a build_command that uses pnpm only warns", async () => {
+    const dir = copyRepo();
+    editJson(
+      dir,
+      "findagent.json",
+      (j) => (j.build_command = "pnpm install --frozen-lockfile && pnpm build"),
+    );
+    const found = await run(dir);
+    expect(errors(found)).toEqual([]);
+    expect(found.find((f) => f.code === "build_command_not_npm")?.level).toBe("warn");
+  });
   it("a secret or private key in any file", async () => {
     const armor = ["-----", "BEGIN RSA ", "PRIVATE KEY", "-----"].join("");
     await expectError("secret_shape", (d) => writeText(d, "src/notes.txt", armor));

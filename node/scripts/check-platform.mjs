@@ -38,6 +38,9 @@ const DEFAULT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 /** The panel rule FindAgent's preflight applies to a creator's panel. Same expression, on purpose. */
 const PANEL_CALLS_A_TOOL = /tools\/call|callServerTool|\.callTool\s*\(/;
 const MAX_PANEL_BYTES = 512 * 1024;
+/** The platform's caps on `skills[]`: at most 40 entries, and a tool description is cut at 500. */
+const MAX_SKILLS = 40;
+const MAX_TOOL_DESCRIPTION = 500;
 
 const LOCKFILES_OTHER_THAN_PNPM = [
   "package-lock.json",
@@ -268,7 +271,30 @@ export async function checkPlatform({ root = DEFAULT_ROOT, tools, tracked } = {}
         "skills[] is empty: the agent would be served with an empty tool list. List every tool with id, name and description.",
       );
     }
+    if (skills.length > MAX_SKILLS) {
+      err(
+        "a",
+        "skills_too_many",
+        `skills[] lists ${skills.length} tools; the platform refuses more than ${MAX_SKILLS}.`,
+      );
+    }
     for (const s of skills) {
+      if (typeof s?.description === "string" && s.description.length > MAX_TOOL_DESCRIPTION)
+        err(
+          "a",
+          "skill_description_cut",
+          `skills[] ${s.id} has a ${s.description.length}-character description; the served tool list cuts it at ${MAX_TOOL_DESCRIPTION}, mid-sentence. Shorten it and end on a full stop.`,
+        );
+      if (typeof s?.id === "string" && s.id.length > 64)
+        err("a", "skill_id_long", `skills[] id ${s.id} is longer than 64 characters.`);
+      if (typeof s?.name === "string" && s.name.length > 120)
+        err("a", "skill_name_long", `skills[] name ${s.name} is longer than 120 characters.`);
+      if (s?.input_schema !== undefined && s.input_schema?.type !== "object")
+        err(
+          "a",
+          "skill_schema_type",
+          `skills[] ${s.id} has an input_schema whose type is not "object"; the platform refuses it.`,
+        );
       if (
         !s ||
         typeof s.id !== "string" ||
@@ -603,6 +629,12 @@ export async function checkPlatform({ root = DEFAULT_ROOT, tools, tracked } = {}
           "build_wrong_manager",
           "build_command uses yarn or bun, but the committed lockfile is pnpm's. Use one package manager.",
         );
+      if (/\b(pnpm|yarn|bun)\b/.test(bc))
+        warn(
+          "e",
+          "build_command_not_npm",
+          "build_command uses a package manager other than npm. The sandbox's own install step is npm, and this repo could not verify that pnpm, yarn or bun exist in the build sandbox. `npm run build` is the safe form.",
+        );
       if (/\bnpm\s+(ci|install|i)\b/.test(bc))
         err(
           "e",
@@ -636,12 +668,12 @@ export async function checkPlatform({ root = DEFAULT_ROOT, tools, tracked } = {}
     if (
       manifest?.runtime?.kind === "node" &&
       manifest.runtime.version &&
-      !["20", "22", "24"].includes(String(manifest.runtime.version))
+      !["22", "24"].includes(String(manifest.runtime.version))
     ) {
       err(
         "e",
         "runtime_version",
-        `runtime.version ${manifest.runtime.version} is not one of 20, 22, 24.`,
+        `runtime.version ${manifest.runtime.version} is not one of 22, 24, the only Node versions the sandbox runs (the schema's own runtime enum).`,
       );
     }
   }
