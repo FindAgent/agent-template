@@ -41,7 +41,9 @@ that it is your own work.
      `pnpm_config_strict_dep_builds=false` for the install: see `node/README.md`)
    - Python: `python -m venv .venv`, activate it, `pip install -r requirements-dev.txt`, `pytest`
 5. **Check the platform rules**: `pnpm check:platform` (Node) or `python scripts/check_platform.py`
-   (Python). It fails in seconds on the things that otherwise sit in review.
+   (Python). It fails in seconds on the things that otherwise sit in review. For the platform's own
+   whole-repo check (six entry tools, egress, lockfile, secret shapes), run `npx --yes @findagent/cli@0.4.1 check .`:
+   it is offline and read-only.
 6. **Submit** at <https://findagent.cloud/submit>: choose **Agent**, then the **GitHub** door (a code agent
    comes in from a repository; Upload and the Editor take instructions, skills and actions only), pick your
    repository and follow the steps: We found, Basics (title, tagline, description, example prompts, a
@@ -142,13 +144,18 @@ declare no slot at all.
 
 ## Agent memory (optional)
 
-A hosted run can keep a small amount of state per buyer and per agent. The platform puts the stored JSON
-in the environment variable `FINDAGENT_MEMORY` before the tool runs; to change it, return a JSON object
-under the key `__memory` in the tool's structured result. The platform stores it (replacing the previous
-value), strips `__memory` before the result reaches the model and the buyer, and refuses a value over
-**64 KB** or one that contains a secret. It exists for hosted code-bundle runs only (a local run has no
-memory), it is private to one user and one agent, and it is a cache, not a database: do not keep
-credentials in it. This template does not use it; the checker does not require it.
+A hosted run can keep a small amount of state per buyer and per agent. The platform writes the stored JSON
+to a file in the working directory and names it in the environment variable `FINDAGENT_MEMORY_FILE` (a path
+relative to the working directory, JSON text inside): **read that file first**. `FINDAGENT_MEMORY` (the same
+JSON as an environment variable) is only a fallback and is **absent when the memory is large**, because the
+sandbox environment has a hard limit of 4096 bytes in total: credentials and platform variables above about
+4000 bytes are refused before the sandbox starts, with the creator-facing reason `code_bundle_env_too_large`.
+To change the memory, return a JSON object under the key `__memory` in the tool's structured result. The
+platform stores it (replacing the previous value) and strips `__memory` before the result reaches the model
+and the buyer. A value of 64 KB or more, or one that contains a secret, is rejected and the old memory is
+kept, so keep what you return bounded (newest N entries, a size cap per entry). It exists for hosted
+code-bundle runs only (a local run has no memory), it is private to one user and one agent, and it is a cache,
+not a database: do not keep credentials in it. This template does not use it; the checker does not require it.
 
 ## Updating a published agent
 
@@ -160,10 +167,9 @@ is held on the old version until they acknowledge an update that widens permissi
 slot, a new host on a slot, a new destructive tool, or a changed `auth_scheme`. Copy-only changes and new
 read or write tools do not hold anyone.
 
-A re-pull **re-derives `skills[]` from the DXT `manifest.json`** (tool ids become kebab-case and the
-`input_schema` is not carried), even when `findagent.json` declares them. Keep `manifest.json` in step
-(`sync:manifest` does) and read the stored tool list after a re-pull. This is a known platform defect,
-not behaviour to rely on.
+A re-pull keeps the `skills[]` ids and typed `input_schema` that `findagent.json` declares (an earlier
+platform defect that re-derived them from the DXT `manifest.json` is fixed). Keep `manifest.json` in step
+anyway (`sync:manifest` does) and read the stored tool list once after a re-pull.
 
 ## What preflight tells you
 

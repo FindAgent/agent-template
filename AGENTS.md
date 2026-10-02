@@ -38,12 +38,18 @@ You were pointed at this repo to produce a **code agent** for the FindAgent mark
 
 9. **Install and versions.** The platform sandbox installs with npm and ignores `pnpm-lock.yaml`, so pin exact
    versions in `package.json`; keep `build_command` as `npm run build`. A published agent is updated by a
-   re-pull (`findagent_new_version` over MCP, patch bump unless `bump` says otherwise); a re-pull rebuilds
-   `skills[]` from `manifest.json`, so keep the two in step with `sync:manifest`.
+   re-pull (`findagent_new_version` over MCP, patch bump unless `bump` says otherwise). A re-pull keeps the
+   `skills[]` ids and typed `input_schema` you declare in `findagent.json`; still keep `manifest.json` in step
+   (`sync:manifest`) and read the stored tool list once after a re-pull.
 
-10. **Agent memory** is optional: the previous state arrives in the environment variable `FINDAGENT_MEMORY`
-    (JSON) and new state is returned as an object under `__memory` in the structured result (64 KB at most,
-    one user and one agent, hosted runs only, never a secret).
+10. **Agent memory** is optional. A hosted run delivers the previous state as a file: read
+    `FINDAGENT_MEMORY_FILE` first (a path relative to the working directory; the file holds the JSON text).
+    `FINDAGENT_MEMORY` (the same JSON as an environment variable) is only a fallback and is ABSENT when the
+    memory is large, because the sandbox environment has a hard 4096-byte limit (credentials and platform
+    variables are refused above about 4000 bytes with the creator-facing reason `code_bundle_env_too_large`).
+    Return new state as an object under `__memory` in the structured result: it must stay under 64 KB or the
+    write is rejected and the old memory is kept. One user and one agent, hosted runs only, never a secret.
+    Keep caches bounded (newest N entries, a size cap).
 
 11. **Say what you ran.** In your hand-off name the assistant and tools you used and every gate you actually
     executed; write "not checked: <reason>" for anything you did not run. The template's own README lists
