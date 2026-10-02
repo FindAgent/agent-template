@@ -195,6 +195,22 @@ class TestRuleA:
         manifest(h, lambda j: j["skills"][0].update(name="other"))
         h.expect("skill_id_mismatch")
 
+    def test_a_tool_description_the_served_list_would_cut_at_500_characters(self, h: Harness) -> None:
+        manifest(h, lambda j: j["skills"][0].update(description="x" * 501))
+        h.expect("skill_description_cut")
+
+    def test_more_than_40_skills(self, h: Harness) -> None:
+        def add(j: dict) -> None:
+            for i in range(40):
+                j["skills"].append({"id": f"extra_{i}", "name": f"extra_{i}", "description": "x" * 50})
+
+        manifest(h, add)
+        h.expect("skills_too_many")
+
+    def test_an_input_schema_that_is_not_an_object_schema(self, h: Harness) -> None:
+        manifest(h, lambda j: j["skills"][0].update(input_schema={"type": "array"}))
+        h.expect("skill_schema_type")
+
     def test_a_skill_description_that_drifted_from_the_servers(self, h: Harness) -> None:
         manifest(h, lambda j: j["skills"][0].update(description=j["skills"][0]["description"] + " (edited by hand)"))
         h.expect("skill_description_drift")

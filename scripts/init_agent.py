@@ -18,7 +18,24 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SKIP = shutil.ignore_patterns("node_modules", "dist", ".venv", "__pycache__", ".pytest_cache", ".ruff_cache", "screenshots")
+# Local build output and machine-local files never belong in a new agent. `pnpm-workspace.yaml` in particular is
+# written by pnpm on install and a tracked copy makes the platform build read the agent as a memberless monorepo.
+SKIP = shutil.ignore_patterns(
+    "node_modules",
+    "dist",
+    ".venv",
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    "screenshots",
+    "pnpm-workspace.yaml",
+    "*.tsbuildinfo",
+    ".eslintcache",
+    ".prettiercache",
+    ".env",
+    ".env.*",
+    "*.log",
+)
 
 
 def arg(flag: str, default: str) -> str:
@@ -87,7 +104,14 @@ def main() -> int:
         "## Rules\n\n- Never put a secret in any file. Credentials are declared in `findagent.json` (`credential_slots`), never valued.\n"
         "- Keep the six entry tools (`plan_inputs`, `open_form`, `run_form`, `run_full`, `list_capabilities`, `discover_intent`).\n"
         "- `allowed_hosts` lists exactly the hosts the code calls; the sandbox egress is default-deny.\n"
+        "- `skills[]` lists every tool (at most 40), each description at most 500 characters because the served tool list cuts there. "
+        "`runtime.version` is 22 or 24 (Node) or 3.13 (Python).\n"
         "- After changing `mcp` in `findagent.json`, run `python scripts/sync_mcp_configs.py` if present, or regenerate the MCP configs.\n"
+        "- Optional agent memory: the previous state arrives in `FINDAGENT_MEMORY` (JSON); return new state under `__memory` "
+        "(64 KB, one user and one agent, hosted runs only, never a secret).\n"
+        "- A published agent is updated by a re-pull (`findagent_new_version` over MCP; patch bump by default). "
+        "A re-pull rebuilds `skills[]` from `manifest.json`, so keep the two in step.\n"
+        "- Say which assistant and tools you used and which gates you ran; write `not checked: <reason>` for anything you did not run.\n"
         "- Run the gates in README.md before saying anything works. Do not submit or publish for the user: they submit at "
         "https://findagent.cloud/submit, or over MCP with `findagent_create_code_draft`.\n\n"
         "Reference: https://github.com/FindAgent/agent-template and the playbooks in https://github.com/FindAgent/agent-creators.\n"

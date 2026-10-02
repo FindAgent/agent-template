@@ -41,6 +41,9 @@ DEFAULT_ROOT = Path(__file__).resolve().parent.parent
 # The panel rule FindAgent's preflight applies to a creator's panel. Same expression, on purpose.
 PANEL_CALLS_A_TOOL = re.compile(r"tools/call|callServerTool|\.callTool\s*\(")
 MAX_PANEL_BYTES = 512 * 1024
+# The platform's caps on `skills[]`: at most 40 entries; a tool description is cut at 500 characters.
+MAX_SKILLS = 40
+MAX_TOOL_DESCRIPTION = 500
 
 OTHER_LOCKFILES = ["package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lockb", "Pipfile.lock"]
 IGNORED_LOCKFILES = ["poetry.lock", "uv.lock", "pdm.lock"]
@@ -245,7 +248,34 @@ def check_platform(
                 "skills[] is empty: the agent would be served with an empty tool list. "
                 "List every tool with id, name and description.",
             )
+        if len(skills) > MAX_SKILLS:
+            err(
+                "a",
+                "skills_too_many",
+                f"skills[] lists {len(skills)} tools; the platform refuses more than {MAX_SKILLS}.",
+            )
         for skill in skills:
+            if isinstance(skill, dict):
+                description = skill.get("description")
+                if isinstance(description, str) and len(description) > MAX_TOOL_DESCRIPTION:
+                    err(
+                        "a",
+                        "skill_description_cut",
+                        f"skills[] {skill.get('id')} has a {len(description)}-character description; the served tool "
+                        f"list cuts it at {MAX_TOOL_DESCRIPTION}, mid-sentence. Shorten it and end on a full stop.",
+                    )
+                if isinstance(skill.get("id"), str) and len(skill["id"]) > 64:
+                    err("a", "skill_id_long", f"skills[] id {skill['id']} is longer than 64 characters.")
+                if isinstance(skill.get("name"), str) and len(skill["name"]) > 120:
+                    err("a", "skill_name_long", f"skills[] name {skill['name']} is longer than 120 characters.")
+                schema = skill.get("input_schema")
+                if schema is not None and not (isinstance(schema, dict) and schema.get("type") == "object"):
+                    err(
+                        "a",
+                        "skill_schema_type",
+                        f"skills[] {skill.get('id')} has an input_schema whose type is not an object schema; "
+                        "the platform refuses it.",
+                    )
             if not (
                 isinstance(skill, dict)
                 and isinstance(skill.get("id"), str)

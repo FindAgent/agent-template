@@ -42,10 +42,26 @@ that it is your own work.
    - Python: `python -m venv .venv`, activate it, `pip install -r requirements-dev.txt`, `pytest`
 5. **Check the platform rules**: `pnpm check:platform` (Node) or `python scripts/check_platform.py`
    (Python). It fails in seconds on the things that otherwise sit in review.
-6. **Submit** at <https://findagent.cloud/submit>: choose the GitHub door, pick your repository, and
-   follow the steps (Validate builds it for real, then Submit unlocks).
+6. **Submit** at <https://findagent.cloud/submit>: choose **Agent**, then the **GitHub** door (a code agent
+   comes in from a repository; Upload and the Editor take instructions, skills and actions only), pick your
+   repository and follow the steps: We found, Basics (title, tagline, description, example prompts, a
+   Discipline **and** a sub-discipline), Credentials, Manifest, Review. On Review, **Run preflight**: it
+   checks the manifest and categories and dry-runs the build in the sandbox, which takes minutes and
+   re-checks itself. **Submit for review** unlocks only when the build passed; then tick the two
+   confirmations (it is your own work; no prohibited category). A repository that already has a draft
+   resumes where it stopped and is not pulled again. Over MCP, the same flow is
+   `findagent_create_code_draft`, then `findagent_preflight`, then `findagent_submit_for_review`.
 
 Nothing in this repository submits or publishes anything for you.
+
+## Which assistants this was checked with
+
+The instructions are plain Markdown (`AGENTS.md` is the entry point; `CLAUDE.md`, `GEMINI.md`,
+`CONVENTIONS.md`, `.aider.conf.yml`, `.github/copilot-instructions.md` and `.cursor/rules/` only point at it),
+so any assistant that can read files and run commands can follow them. The scripts and tests were run by
+hand and by CI (Node 22 and Python 3.13). The hand-off in `AGENTS.md` was last exercised end to end with
+Claude Code only; Codex, Cursor, Gemini CLI, GitHub Copilot and Aider read the same files but have not
+been run against this template.
 
 ## What every code agent must do (the checklist)
 
@@ -54,8 +70,10 @@ Nothing in this repository submits or publishes anything for you.
       first three, so never build your own form panel for them.
 - [ ] **A missing required argument answers `needs_input`** and names the slot. It never throws.
 - [ ] **A real `findagent.json`** at the repo root: `schema_version "1.2"`, `kind "code-bundle"`, `name`,
-      `entrypoint`, `runtime`, plus the listing text and `skills[]`. A DXT `manifest.json` alone is
-      replaced by a contract FindAgent guesses, and the hosts you declared are dropped.
+      `entrypoint`, `runtime`, `mcp`, plus the listing text and `skills[]` (at most 40, each tool
+      description at most 500 characters because the served tool list cuts there). A DXT `manifest.json`
+      alone is replaced by a contract FindAgent infers, and the hosts you declared are dropped; preflight
+      warns about it (`findagent_json_missing`).
 - [ ] **Egress is default-deny.** `allowed_hosts` is every host you call and nothing else. Never fetch a
       URL a caller supplied: take the content as input instead.
 - [ ] **Credentials are declarations, never values** (see below).
@@ -72,24 +90,33 @@ Nothing in this repository submits or publishes anything for you.
 ## Pitfalls (each one has stranded a real submission)
 
 **a. `findagent.json` and `skills[]`.** Schema 1.2, kind `code-bundle`, and `skills[]` lists *every*
-tool the server registers (id, name, description). Without it the agent is served with an empty tool
-list. `sync:manifest` / `sync_manifest.py` rewrites `skills[]` from the real server.
+tool the server registers (`id` and `name` equal to the tool's real name, a description, and the tool's
+`input_schema`, which is what a client uses to name the arguments). Without `skills[]` the agent is
+served with an empty tool list. `sync:manifest` / `sync_manifest.py` rewrites `skills[]` from the real
+server. `runtime.version` is `22` or `24` for Node and `3.13` for Python: those are the only runtimes the
+sandbox has (Node 20 is refused by the platform's schema enum).
 
 **b. Listing text.** `example_prompts` needs 1 to 5 prompts or Submit refuses; also a `tagline` (at most
 140 characters), a `description` and `tags`.
 
-**c. Category hints.** The category is guessed from your words. Put the discipline in `tags`
-(`software-development` for a code agent) and avoid health, monitor, compliance and license-type words
-in tags, because they send the agent to the wrong category.
+**c. Category hints.** The wizard pre-selects a category only on a strong match, and you confirm it: you
+must pick a Discipline **and** one sub-discipline under it (a top level with no sub is refused), and
+the preflight judges what is on screen. Still put the discipline in `tags` (`software-development` for
+a code agent) and avoid health, monitor, compliance and license-type words there, because they are
+what pulled a real submission toward Legal and Agriculture.
 
 **d. The panel never calls a tool.** A creator's panel may not use `tools/call`. It shows data that
 arrives in the tool result and, to ask something, posts `ui/message` to the conversation. No
 `ui.domain`, no network, tool binding visibility `["model"]`, `openai/widgetAccessible` false.
 
-**e. Lockfile and build.** Node: commit `pnpm-lock.yaml`, no `package-lock.json`, a `build_command` that
-matches the package manager, no tracked `pnpm-workspace.yaml` (pnpm may write one locally: git-ignore
-it), and the entrypoint must exist once built. Python: `requirements.txt` of exact pins, nothing that
-needs compiling, the panel built and committed.
+**e. Lockfile and build.** The sandbox installs with **npm**: `npm ci` when `package-lock.json` (or
+`npm-shrinkwrap.json`) is committed, otherwise a fresh `npm install --no-package-lock`. It does **not**
+read `pnpm-lock.yaml`, `yarn.lock` or `bun.lock`. This template keeps `pnpm-lock.yaml` for local and CI
+installs, so what makes the hosted install reproducible is **exact versions in `package.json`** (no `^`,
+no `~`); transitive dependencies still resolve fresh. Keep one lockfile, a `build_command` of
+`npm run build` (devDependencies are installed whenever a build runs), no tracked `pnpm-workspace.yaml`
+(pnpm may write one locally: git-ignore it), and make sure the entrypoint exists once built. Python:
+`requirements.txt` of exact pins, nothing that needs compiling, the panel built and committed.
 
 **f. Hosts and secrets.** `allowed_hosts` exactly the hosts called, no more and no fewer.
 `credential_slots` hold labels and destinations, never values.
@@ -112,6 +139,40 @@ If the address belongs to the **buyer** (a self-hosted tool, a per-customer API)
 `install_host: true` and leave `allowed_hosts` empty: the buyer supplies the host when they connect, and
 the secret is only ever sent there. Never leave a slot with neither. If the agent needs no secret,
 declare no slot at all.
+
+## Agent memory (optional)
+
+A hosted run can keep a small amount of state per buyer and per agent. The platform puts the stored JSON
+in the environment variable `FINDAGENT_MEMORY` before the tool runs; to change it, return a JSON object
+under the key `__memory` in the tool's structured result. The platform stores it (replacing the previous
+value), strips `__memory` before the result reaches the model and the buyer, and refuses a value over
+**64 KB** or one that contains a secret. It exists for hosted code-bundle runs only (a local run has no
+memory), it is private to one user and one agent, and it is a cache, not a database: do not keep
+credentials in it. This template does not use it; the checker does not require it.
+
+## Updating a published agent
+
+A new version of a live agent is a **re-pull** of its repository: `findagent_new_version` over MCP (it
+routes on the agent's kind), `findagent_repull`, or **Publish new version** on the dashboard. The version
+number goes up by a **patch** unless you pass `bump` (`minor` or `major`). The new version is scanned,
+rebuilt and reviewed; the live version keeps serving until it is approved. A buyer who already connected
+is held on the old version until they acknowledge an update that widens permissions: a new credential
+slot, a new host on a slot, a new destructive tool, or a changed `auth_scheme`. Copy-only changes and new
+read or write tools do not hold anyone.
+
+A re-pull **re-derives `skills[]` from the DXT `manifest.json`** (tool ids become kebab-case and the
+`input_schema` is not carried), even when `findagent.json` declares them. Keep `manifest.json` in step
+(`sync:manifest` does) and read the stored tool list after a re-pull. This is a known platform defect,
+not behaviour to rely on.
+
+## What preflight tells you
+
+Besides the hard failures (invalid manifest, missing build, bad categories), preflight reports advisories
+that never block Submit: `form_panel_tools_missing` (one of `open_form`, `plan_inputs`, `run_form` is not
+declared, so a department shows a plain tool instead of a form), `panel_cannot_call_tools` (your panel
+script calls `tools/call`, which the platform refuses for every creator panel),
+`open_input_schema` (a tool with no typed `input_schema`), `code_bundle_no_skills`, `connectors_hosts_missing`
+and `findagent_json_missing`. A smoke call of one tool in the sandbox is opt-in and advisory as well.
 
 ## What `check:platform` checks
 
