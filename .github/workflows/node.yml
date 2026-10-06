@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   gates:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       pnpm_config_strict_dep_builds: "false"
