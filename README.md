@@ -24,7 +24,12 @@ run on the buyer's machine only with install and consent) and `mcp.json`.
 
 This template covers the **Code** part: a *code-bundle* that runs in FindAgent's isolated sandbox
 (hosted), or on the buyer's own machine with informed consent if its `serve` field says `local` or
-both. Buyers use an agent two ways: **Connect** (it runs behind FindAgent's gateway, nothing to install)
+both. **The code is never part of the package.** A code agent may also carry the text parts: add a `plugin.json`
+and `skills/<id>/SKILL.md` (the standing instructions are the reserved skill `skills/instructions/SKILL.md`) beside
+the code, and FindAgent stores, scans and attaches them with the version. Only `plugin.json`, `skills/`, `commands/`
+and `agents/` are taken; the server, `scripts/`, `tests/`, `ui/` and the generated MCP client configs are not, and
+actions are not declared there (a code agent's tools come from `findagent.json`). `findagent check` shows what will be
+attached. Buyers use an agent two ways: **Connect** (it runs behind FindAgent's gateway, nothing to install)
 or **Install** (the files go on their machine). A code agent is submitted at
 <https://findagent.cloud/submit> through the GitHub door, is scanned and human-reviewed, and you attest
 that it is your own work.
