@@ -58,7 +58,7 @@ ruff check . && ruff format --check .
 mypy framework_agent server.py scripts
 pytest
 python scripts/sync_manifest.py --check
-npx --yes @findagent/cli@0.4.2 check .            # the platform's own whole-repo check, offline
+npx --yes @findagent/cli@latest check .            # the platform's own whole-repo check, offline
 ```
 
 ## Make it yours

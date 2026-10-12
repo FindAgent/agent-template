@@ -7,8 +7,8 @@ names the template's package and helper scripts and fails in any other agent.
 import re
 from pathlib import Path
 
-#: The published CLI the platform checks are run with; pinned so a result is reproducible.
-CLI = "@findagent/cli@0.4.2"
+#: The published CLI the platform checks are run with: always the latest, so the checks follow the platform.
+CLI = "@findagent/cli@latest"
 
 PYTHON_HEAD = """name: CI
 

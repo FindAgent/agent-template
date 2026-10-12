@@ -73,7 +73,7 @@ NON_CODE_RULES = {
         "- Standing instructions are the reserved skill `skills/instructions/SKILL.md`. Rule files such as `CLAUDE.md` are not "
         "package parts.\n"
         "- `hooks/`, `scripts/` and executables are stored and scanned but reach no buyer today; do not rely on them.\n"
-        "- Check with `npx --yes @findagent/cli@0.4.2 check .` before saying anything works.\n"
+        "- Check with `npx --yes @findagent/cli@latest check .` before saying anything works.\n"
     ),
     "actions": (
         "This is a FindAgent actions agent: declarative HTTP tools in `plugin.json` under "
@@ -84,7 +84,7 @@ NON_CODE_RULES = {
         "the URL host is inside it.\n"
         "- Annotations tell the truth: a tool that changes something is not read-only.\n"
         "- At most 40 tools. Declare actions in one place only (`plugin.json` or a `findagent.json`).\n"
-        "- Check with `npx --yes @findagent/cli@0.4.2 check .` before saying anything works.\n"
+        "- Check with `npx --yes @findagent/cli@latest check .` before saying anything works.\n"
     ),
     "listing": (
         "This is a checklist for listing an MCP server somebody already runs on FindAgent. There is no code and no manifest.\n\n"

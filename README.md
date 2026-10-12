@@ -56,7 +56,7 @@ that it is your own work.
    - Python: `python -m venv .venv`, activate it, `pip install -r requirements-dev.txt`, `pytest`
 5. **Check the platform rules**: `pnpm check:platform` (Node) or `python scripts/check_platform.py`
    (Python). It fails in seconds on the things that otherwise sit in review. For the platform's own
-   whole-repo check (six entry tools, egress, lockfile, secret shapes), run `npx --yes @findagent/cli@0.4.2 check .`:
+   whole-repo check (six entry tools, egress, lockfile, secret shapes), run `npx --yes @findagent/cli@latest check .`:
    it is offline and read-only.
 6. **Submit** at <https://findagent.cloud/submit>: choose **Agent**, then the **GitHub** door (a code agent
    comes in from a repository; Upload and the Editor take instructions, skills and actions only), pick your

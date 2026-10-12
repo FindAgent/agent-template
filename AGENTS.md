@@ -37,7 +37,7 @@ You were pointed at this repo to produce a **code agent** for the FindAgent mark
    manifest and MCP configs); `python scripts/check_repo_files.py <dir>` verifies it. The list is `scripts/repo-files.json`.
    Variants: `node`, `python`, `framework` (code agents); `package` (instructions and skills), `actions` (declarative API tools),
    `listing` (a checklist for an MCP server somebody already runs). The last three have no code: pick the variant first
-   (see the table in `README.md`), and for them check with `npx --yes @findagent/cli@0.4.2 check <dir>` instead of the
+   (see the table in `README.md`), and for them check with `npx --yes @findagent/cli@latest check <dir>` instead of the
    code gates. The `framework` variant does not import an agent framework; it carries a tiny local agent loop and a
    mapping to the frameworks (see `framework/README.md`), which was not run against a real framework SDK.
 

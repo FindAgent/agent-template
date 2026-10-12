@@ -32,5 +32,5 @@ jobs:
           python scripts/init_agent.py listing "$RUNNER_TEMP/listing-agent" --name "CI Listing"
       - name: The platform's own check accepts the no-code variants
         run: |
-          npx --yes @findagent/cli@0.4.2 check package
-          npx --yes @findagent/cli@0.4.2 check actions
+          npx --yes @findagent/cli@latest check package
+          npx --yes @findagent/cli@latest check actions

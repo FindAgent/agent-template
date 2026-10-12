@@ -45,4 +45,4 @@ jobs:
       - name: Generated files are current
         run: python scripts/sync_manifest.py --check
       - name: Platform rules (the CLI's whole-repo check)
-        run: npx --yes @findagent/cli@0.4.2 check .
+        run: npx --yes @findagent/cli@latest check .

@@ -17,7 +17,7 @@ with the buyer's GitHub token.
 ## The rules it follows
 
 - Each tool has a `name` (MCP-safe, unique), a `description` of 10 to 500 characters that says *when* to call it, a typed `input_schema` and an `action`.
-- An `http` action uses `https://` only. A `{name}` token in the URL is filled from the tool's arguments exactly as written: the runtime does not check it against the schema's `pattern`, and it does not encode it. Put a caller's value in the QUERY of a fixed endpoint (as `list_repository_issues` does), never in the path: a value such as `../../user` in a path would send the call, with the buyer's token, to another endpoint on the same host. Keep a `pattern` and `maxLength` in the schema anyway, so a client knows the shape.
+- An `http` action uses `https://` only. A `{name}` token in the URL is filled from the tool's arguments exactly as written: the runtime does not check it against the schema's `pattern`, and it does not encode it. Put a caller's value in the QUERY of a fixed endpoint (as `list_repository_issues` does), never in the path: a value such as `../../user` in a path would send the call, with the buyer's token, to another endpoint on the same host. Keep a `pattern` and `maxLength` in the schema anyway, so a client knows the shape. A query value can still add search qualifiers to the same read-only endpoint (for example `a/b+user:x`); that stays inside the declared host and the buyer's own token, which is why a query is the safer place.
 - **A credential slot declares a key, never a value.** `github_token` has `allowed_hosts: ["api.github.com"]`: the buyer's token is sent to that exact host and nowhere else. A slot with no host and no `install_host` is a dead credential and is refused at publish.
 - Use `install_host: true` instead (and leave `allowed_hosts` empty) only when the address belongs to the buyer, for example a self-hosted tool; then the URL uses `{install_host}`.
 - Annotations tell the truth: both tools read only, so `readOnlyHint` is true. A tool that changes something is not read-only, and a destructive one automatically gets a human approval floor.
@@ -33,7 +33,7 @@ with the buyer's GitHub token.
 ## Check it
 
 ```
-npx --yes @findagent/cli@0.4.2 check .
+npx --yes @findagent/cli@latest check .
 ```
 
 Offline and read-only: it validates the actions, the slot's host binding and the secret shapes. A live call needs a
@@ -42,7 +42,7 @@ when you have none.
 
 ## Assistant entry files become skills
 
-`python scripts/init_agent.py` adds `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` and the Copilot, Cursor and Aider files so an assistant can work on this repository. When FindAgent imports the repository, a root `AGENTS.md` and `.cursor/rules/*` are read as **skills** (they count toward the 40 and reach the buyer's model); `CLAUDE.md`, `GEMINI.md`, `CONVENTIONS.md` and `copilot-instructions.md` are not package parts. Run `npx --yes @findagent/cli@0.4.2 check .` to see exactly what is kept, and delete `AGENTS.md` and `.cursor/rules/` from the copy you submit (or keep them on purpose and write them for the buyer's model).
+`python scripts/init_agent.py` adds `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` and the Copilot, Cursor and Aider files so an assistant can work on this repository. When FindAgent imports the repository, a root `AGENTS.md` and `.cursor/rules/*` are read as **skills** (they count toward the 40 and reach the buyer's model); `CLAUDE.md`, `GEMINI.md`, `CONVENTIONS.md` and `copilot-instructions.md` are not package parts. Run `npx --yes @findagent/cli@latest check .` to see exactly what is kept, and delete `AGENTS.md` and `.cursor/rules/` from the copy you submit (or keep them on purpose and write them for the buyer's model).
 
 ## Submit
 
