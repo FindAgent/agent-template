@@ -1,5 +1,5 @@
 {
-  "$comment": "The one definition of a complete code-agent repository. scripts/init_agent.py creates these, scripts/check_repo_files.py verifies them.",
+  "$comment": "The one definition of a complete agent repository. scripts/init_agent.py creates these, scripts/check_repo_files.py verifies them. 'all' + node|python|framework describe a code agent; 'common' + package|actions|listing describe a repository with no code.",
   "all": [
     "README.md",
     "LICENSE",
@@ -25,6 +25,27 @@
   "node": ["package.json", "tsconfig.json", "eslint.config.js"],
   "node_one_of": [["pnpm-lock.yaml", "package-lock.json", "yarn.lock"]],
   "python": ["pyproject.toml", "requirements.txt", "requirements-dev.txt"],
+  "framework": ["pyproject.toml", "requirements.txt", "requirements-dev.txt", "server.py", "framework_agent/agent_loop.py"],
   "json_files": ["findagent.json", "manifest.json", "mcp.json", ".mcp.json", ".cursor/mcp.json", ".vscode/mcp.json"],
-  "dirs_with_files": {"tests_or_test": ["tests", "test"]}
+  "dirs_with_files": {"tests_or_test": ["tests", "test"]},
+  "common": [
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    ".gitignore",
+    ".gitattributes",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "CONVENTIONS.md",
+    ".aider.conf.yml",
+    ".github/copilot-instructions.md",
+    ".cursor/rules/findagent-code-agent.mdc",
+    ".github/workflows/ci.yml"
+  ],
+  "package": ["plugin.json", "skills/instructions/SKILL.md"],
+  "actions": ["plugin.json", "skills/instructions/SKILL.md"],
+  "listing": ["listing.md"],
+  "non_code_json_files": {"package": ["plugin.json"], "actions": ["plugin.json"], "listing": []}
 }

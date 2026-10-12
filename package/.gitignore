@@ -1,0 +1,14 @@
+# Environment and secrets: never commit these.
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Editors and OS files.
+.vscode/*
+!.vscode/mcp.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log

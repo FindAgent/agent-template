@@ -1,13 +1,19 @@
 """Create a complete code-agent repository from a variant of this template.
 
-    python scripts/init_agent.py <node|python> <destination-dir> [--name "My Agent"] [--slug my-agent]
+    python scripts/init_agent.py <variant> <destination-dir> [--name "My Agent"] [--slug my-agent]
     python scripts/init_agent.py --fill <existing-agent-repo>   # add only what is missing
+
+Variants:
+    node, python, framework   code agents (Node 22/24, Python 3.13, a Python agent in the shape of an agent framework)
+    package                   instructions and skills (Agent Plugins package), no code
+    actions                   declarative API tools that use the buyer's own credentials, no code
+    listing                   a checklist for listing an MCP server somebody already runs, no manifest
 
 Copies the variant as the new repository root and adds everything a complete agent repo carries
 (scripts/repo-files.json is the one list): the assistant entry files (AGENTS.md, CLAUDE.md,
 GEMINI.md, CONVENTIONS.md, .aider.conf.yml, Copilot and Cursor rules), SECURITY.md, CHANGELOG.md, the
-CI workflow, a DXT manifest.json for the Python variant, and the MCP client configs generated from
-findagent.json. It then runs the completeness check. It never overwrites an existing file.
+CI workflow, and for a code variant a DXT manifest.json (Python and framework) and the MCP client configs
+generated from findagent.json. It then runs the completeness check. It never overwrites an existing file.
 """
 
 import json
@@ -18,6 +24,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+CODE_VARIANTS = ("node", "python", "framework")
+NON_CODE_VARIANTS = ("package", "actions", "listing")
+VARIANTS = CODE_VARIANTS + NON_CODE_VARIANTS
 # Local build output and machine-local files never belong in a new agent. `pnpm-workspace.yaml` in particular is
 # written by pnpm on install and a tracked copy makes the platform build read the agent as a memberless monorepo.
 SKIP = shutil.ignore_patterns(
@@ -51,7 +60,103 @@ def write(dest: Path, rel: str, text: str) -> None:
 
 
 sys.path.insert(0, str(ROOT / "scripts"))
-from ci_workflow import ci_workflow  # noqa: E402
+from ci_workflow import ci_workflow, non_code_ci  # noqa: E402
+
+NON_CODE_RULES = {
+    "package": (
+        "This is a FindAgent instructions and skills package (Agent Plugins 1.0): text only, no code.\n\n"
+        "## Rules\n\n- Never put a secret in any file.\n"
+        "- `plugin.json` needs the `$schema`, a `name` matching `^[a-z0-9](?:[a-z0-9.-]{0,62}[a-z0-9])?$`, a description and a version.\n"
+        "- One folder per skill under `skills/<id>/SKILL.md`: frontmatter `name` (lowercase, digits, single hyphens, equal to the "
+        "folder) and a `description` of at most 1024 characters that says when to use the skill. At most 40 skills per agent; more "
+        "is refused, so split a big collection into several agents.\n"
+        "- Standing instructions are the reserved skill `skills/instructions/SKILL.md`. Rule files such as `CLAUDE.md` are not "
+        "package parts.\n"
+        "- `hooks/`, `scripts/` and executables are stored and scanned but reach no buyer today; do not rely on them.\n"
+        "- Check with `npx --yes @findagent/cli@0.4.2 check .` before saying anything works.\n"
+    ),
+    "actions": (
+        "This is a FindAgent actions agent: declarative HTTP tools in `plugin.json` under "
+        '`extensions["cloud.findagent"].actions`, no code.\n\n'
+        "## Rules\n\n- Never put a secret in any file. A credential slot declares a key (`ref`, `label`, `allowed_hosts`), never a "
+        "value.\n"
+        "- Every action URL is `https://`; the slot an action names in `auth_ref` lists the exact host the secret may reach, and "
+        "the URL host is inside it.\n"
+        "- Annotations tell the truth: a tool that changes something is not read-only.\n"
+        "- At most 40 tools. Declare actions in one place only (`plugin.json` or a `findagent.json`).\n"
+        "- Check with `npx --yes @findagent/cli@0.4.2 check .` before saying anything works.\n"
+    ),
+    "listing": (
+        "This is a checklist for listing an MCP server somebody already runs on FindAgent. There is no code and no manifest.\n\n"
+        "## Rules\n\n- Never put a secret in any file.\n"
+        "- A listing is not an agent: FindAgent never runs the server, and the entry carries no price and no category.\n"
+        "- Tools come from an introspected `tools/list`, never from a hand-typed list.\n"
+        "- Work through `listing.md` and write `not checked: <reason>` for anything you did not look at.\n"
+    ),
+}
+
+
+def detect_variant(dest: Path) -> str | None:
+    """The variant of an existing repository, from what it carries."""
+    manifest = dest / "findagent.json"
+    if manifest.exists():
+        kind = (json.loads(manifest.read_text(encoding="utf-8")).get("runtime") or {}).get("kind")
+        if kind == "python":
+            return "framework" if (dest / "framework_agent").is_dir() else "python"
+        return "node"
+    plugin = dest / "plugin.json"
+    if plugin.exists():
+        return "actions" if "cloud.findagent" in plugin.read_text(encoding="utf-8") else "package"
+    return "listing" if (dest / "listing.md").exists() else None
+
+
+def scaffold_non_code(variant: str, dest: Path, fill: bool) -> int:
+    """A package, actions or listing repository: no manifest to read and no MCP configs (FindAgent writes the gateway entry)."""
+    defaults = {"package": "My Package Agent", "actions": "My Actions Agent", "listing": "My MCP Server Listing"}
+    name = arg("--name", defaults[variant])
+    slug = arg("--slug", re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:63].strip("-"))
+    tagline = {
+        "package": "Instructions and skills for an AI assistant, as an Agent Plugins package.",
+        "actions": "Declarative API tools that use the buyer's own credentials.",
+        "listing": "A checklist for listing an MCP server on FindAgent.",
+    }[variant]
+    plugin = dest / "plugin.json"
+
+    if variant in ("package", "actions") and plugin.exists():
+        data = json.loads(plugin.read_text(encoding="utf-8"))
+        if not fill:
+            data["name"] = slug
+            plugin.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+        tagline = str(data.get("description", tagline))
+
+    pointer = f"# {name}\n\nRead `AGENTS.md` first and follow it.\n"
+    entry = (
+        f"# {name}: instructions for an AI assistant\n\n{tagline}\n\n{NON_CODE_RULES[variant]}\n"
+        "Say which assistant and tools you used and which checks you ran. Do not submit or publish for the user: they submit at "
+        "https://findagent.cloud/submit, or over MCP.\n\n"
+        "Reference: https://github.com/FindAgent/agent-template and the playbooks in https://github.com/FindAgent/agent-creators.\n"
+    )
+    write(dest, "AGENTS.md", entry)
+    write(dest, "CLAUDE.md", "@AGENTS.md\n")
+    write(dest, "GEMINI.md", "@AGENTS.md\n")
+    write(dest, "CONVENTIONS.md", pointer)
+    write(dest, ".aider.conf.yml", "read:\n  - AGENTS.md\n")
+    write(dest, ".github/copilot-instructions.md", pointer)
+    write(dest, ".cursor/rules/findagent-code-agent.mdc",
+          f"---\ndescription: Work on {name}, a FindAgent {variant} repository\nalwaysApply: true\n---\n\n{pointer}")
+    write(dest, "SECURITY.md",
+          f"# Security\n\nReport a vulnerability privately to the maintainers of {name} (use the repository's security advisory "
+          "form). Do not open a public issue for a vulnerability. Never include a real credential in a report.\n")
+    write(dest, "CHANGELOG.md", "# Changelog\n\n## 0.1.0\n\n- Initial release.\n")
+    write(dest, ".github/workflows/ci.yml", non_code_ci(variant))
+    for script in ("check_repo_files.py", "repo-files.json"):
+        write(dest, f"scripts/{script}", (ROOT / "scripts" / script).read_text(encoding="utf-8"))
+
+    if not (dest / ".git").exists():
+        subprocess.call(["git", "init", "-q", str(dest)])
+
+    checker = ROOT / "scripts" / "check_repo_files.py"
+    return subprocess.call([sys.executable, str(checker), str(dest), "--runtime", variant])
 
 
 def main() -> int:
@@ -59,14 +164,14 @@ def main() -> int:
     fill = "--fill" in sys.argv
 
     if fill:
-        if len(pos) != 1 or not (Path(pos[0]) / "findagent.json").exists():
+        found = detect_variant(Path(pos[0]).resolve()) if len(pos) == 1 else None
+        if found is None:
             print(__doc__)
             return 2
         dest = Path(pos[0]).resolve()
-        kind = (json.loads((dest / "findagent.json").read_text(encoding="utf-8")).get("runtime") or {}).get("kind")
-        variant = "python" if kind == "python" else "node"
+        variant = found
     else:
-        if len(pos) < 2 or pos[0] not in ("node", "python"):
+        if len(pos) < 2 or pos[0] not in VARIANTS:
             print(__doc__)
             return 2
         variant, dest = pos[0], Path(pos[1]).resolve()
@@ -74,6 +179,9 @@ def main() -> int:
             print(f"refusing: {dest} is not empty", file=sys.stderr)
             return 2
         shutil.copytree(ROOT / variant, dest, ignore=SKIP, dirs_exist_ok=True)
+
+    if variant in NON_CODE_VARIANTS:
+        return scaffold_non_code(variant, dest, fill)
 
     manifest = json.loads((dest / "findagent.json").read_text(encoding="utf-8"))
     name = arg("--name", manifest.get("name", "My agent"))
@@ -83,7 +191,7 @@ def main() -> int:
         manifest["name"] = name
         (dest / "findagent.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
 
-    if variant == "python":
+    if variant in ("python", "framework"):
         server = manifest["mcp"]
         write(dest, "manifest.json", json.dumps({
             "dxt_version": "0.1",

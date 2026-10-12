@@ -1,6 +1,6 @@
 """Check that a code-agent repository carries every file a complete agent repo has.
 
-    python scripts/check_repo_files.py <path-to-agent-repo> [--runtime node|python]
+    python scripts/check_repo_files.py <path-to-agent-repo> [--runtime node|python|framework|package|actions|listing]
 
 The list lives in scripts/repo-files.json (one definition; init_agent.py creates the same set).
 Also checks that every JSON file parses and that the findagent.json entrypoint exists.
@@ -15,15 +15,48 @@ from pathlib import Path
 LIST = json.loads((Path(__file__).with_name("repo-files.json")).read_text(encoding="utf-8"))
 
 
+NON_CODE = ("package", "actions", "listing")
+
+
+def check_non_code(root: Path, runtime: str) -> int:
+    """A package, actions or listing repository: the common files plus the variant's own, valid JSON, nothing ignored."""
+    wanted = LIST["common"] + LIST[runtime]
+    problems = [f"missing: {rel}" for rel in wanted if not (root / rel).exists()]
+    for rel in LIST["non_code_json_files"][runtime]:
+        p = root / rel
+        if p.exists():
+            try:
+                json.loads(p.read_text(encoding="utf-8"))
+            except ValueError as e:
+                problems.append(f"invalid JSON: {rel} ({e})")
+    if (root / ".git").exists():
+        for rel in wanted:
+            if (root / rel).exists() and subprocess.run(
+                ["git", "-C", str(root), "check-ignore", "-q", rel], capture_output=True
+            ).returncode == 0:
+                problems.append(f"ignored by .gitignore (would never be committed): {rel}")
+    for p in problems:
+        print(f"FAIL {p}")
+    print(f"\n{'OK' if not problems else 'FAILED'}: {len(problems)} problem(s), repository kind {runtime}")
+    return 1 if problems else 0
+
+
 def main() -> int:
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if not args:
-        print("usage: check_repo_files.py <path> [--runtime node|python]", file=sys.stderr)
+        print("usage: check_repo_files.py <path> [--runtime node|python|framework|package|actions|listing]", file=sys.stderr)
         return 2
     root = Path(args[0]).resolve()
     runtime = None
     if "--runtime" in sys.argv:
         runtime = sys.argv[sys.argv.index("--runtime") + 1]
+    if runtime is None and not (root / "findagent.json").exists():
+        if (root / "plugin.json").exists():
+            runtime = "actions" if "cloud.findagent" in (root / "plugin.json").read_text(encoding="utf-8") else "package"
+        elif (root / "listing.md").exists():
+            runtime = "listing"
+    if runtime in NON_CODE:
+        return check_non_code(root, runtime)
     manifest_path = root / "findagent.json"
     manifest = {}
     if manifest_path.exists():
@@ -34,6 +67,8 @@ def main() -> int:
     if runtime is None:
         kind = (manifest.get("runtime") or {}).get("kind")
         runtime = kind if kind in ("node", "python") else ("python" if (root / "pyproject.toml").exists() else "node")
+        if runtime == "python" and (root / "framework_agent").is_dir():
+            runtime = "framework"
 
     problems: list[str] = []
 

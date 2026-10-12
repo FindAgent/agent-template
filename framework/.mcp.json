@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "framework-agent": {
+      "command": "python3",
+      "args": [
+        "server.py"
+      ]
+    }
+  }
+}

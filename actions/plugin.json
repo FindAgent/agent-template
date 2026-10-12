@@ -1,0 +1,57 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "github-issues-example",
+  "description": "Reads the signed-in GitHub user and the open issues of a repository with the buyer's own GitHub token. An example Agent Plugins package with declarative API actions: no code.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "extensions": {
+    "cloud.findagent": {
+      "actions": {
+        "tools": [
+          {
+            "name": "get_authenticated_user",
+            "description": "Use to find out which GitHub account the token belongs to. Returns the account login, name and profile URL. Takes no arguments.",
+            "input_schema": { "type": "object", "properties": {} },
+            "action": {
+              "type": "http",
+              "method": "GET",
+              "url": "https://api.github.com/user",
+              "auth_ref": "github_token"
+            },
+            "annotations": { "readOnlyHint": true, "idempotentHint": true, "openWorldHint": true }
+          },
+          {
+            "name": "list_repository_issues",
+            "description": "Use to list the open issues of one GitHub repository, newest first. Needs the repository owner and name. Returns issue numbers, titles, labels and links.",
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "owner": { "type": "string", "description": "The account or organization that owns the repository, for example octocat." },
+                "repo": { "type": "string", "description": "The repository name, for example hello-world." }
+              },
+              "required": ["owner", "repo"]
+            },
+            "action": {
+              "type": "http",
+              "method": "GET",
+              "url": "https://api.github.com/repos/{owner}/{repo}/issues",
+              "auth_ref": "github_token"
+            },
+            "annotations": { "readOnlyHint": true, "idempotentHint": true, "openWorldHint": true }
+          }
+        ],
+        "credential_slots": [
+          {
+            "ref": "github_token",
+            "label": "GitHub token",
+            "description": "A GitHub personal access token with read access to the repositories you want to read. It is stored encrypted and sent only to api.github.com.",
+            "env": "GITHUB_TOKEN",
+            "type": "secret",
+            "required": true,
+            "allowed_hosts": ["api.github.com"]
+          }
+        ]
+      }
+    }
+  }
+}

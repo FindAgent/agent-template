@@ -1,0 +1,4 @@
+# manifest.json and findagent.json are compared byte for byte by tooling; keep LF on every OS.
+manifest.json text eol=lf
+findagent.json text eol=lf
+* text=auto eol=lf

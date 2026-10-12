@@ -1,0 +1,160 @@
+{
+  "schema_version": "1.2",
+  "kind": "code-bundle",
+  "name": "Framework Agent",
+  "version": "0.1.0",
+  "tagline": "Release notes from commit subjects, written as a framework-style agent loop served over MCP.",
+  "description": "Give it commit subjects and it groups them by their conventional-commit type into features, fixes, maintenance and other, then writes Markdown release notes and the counts per group. The work is done by a small agent loop (an agent, two function tools and a runner) that is shaped like the common agent frameworks, so the same pattern shows how an existing framework agent is wrapped as a FindAgent code agent with the six entry tools. The result is deterministic, calls no network and needs no language model. Replace the triage tools with your own agent and keep the entry tools, the manifest and the checks.",
+  "example_prompts": [
+    "Write release notes from these commits: feat: add export, fix: handle an empty body, docs: update the readme.",
+    "Group these commit subjects into features and fixes."
+  ],
+  "tags": [
+    "software-development",
+    "release-notes",
+    "changelog",
+    "template"
+  ],
+  "discipline": "software-development",
+  "category": "Software Development",
+  "entrypoint": {
+    "path": "server.py",
+    "export": "main"
+  },
+  "runtime": {
+    "kind": "python",
+    "version": "3.13"
+  },
+  "allowed_hosts": [],
+  "serve": [
+    "hosted"
+  ],
+  "mcp": {
+    "mode": "native",
+    "command": "python3",
+    "args": [
+      "server.py"
+    ]
+  },
+  "skills": [
+    {
+      "id": "open_form",
+      "name": "open_form",
+      "description": "Use this the moment the user wants release notes made from commit subjects. It returns the questions to ask (the commit subjects) so a form can be shown. Do NOT run before calling this.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": "run_form",
+      "name": "run_form",
+      "description": "Internal: invoked when the user submits the form opened by open_form. Not for direct use.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Commit subjects, one string each, for example 'feat: add export' or 'fix(api): handle empty body'. At most 500 subjects of 300 characters. A newline separated string is accepted."
+          }
+        }
+      }
+    },
+    {
+      "id": "run_full",
+      "name": "run_full",
+      "description": "Run the whole agent end to end: group the commit subjects by their conventional-commit type, then write Markdown release notes and the counts per group. Use when the user gives commit subjects and wants the notes. Missing the subjects, it asks for them instead of failing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Commit subjects, one string each, for example 'feat: add export' or 'fix(api): handle empty body'. At most 500 subjects of 300 characters. A newline separated string is accepted."
+          }
+        }
+      }
+    },
+    {
+      "id": "triage_commits",
+      "name": "triage_commits",
+      "description": "Group commit subjects into features, fixes, maintenance and other, and write the release notes. Same result as run_full; use it when the subjects are already known and no form is needed. Reports bad input as invalid_input, never as an empty result.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Commit subjects, one string each, for example 'feat: add export' or 'fix(api): handle empty body'. At most 500 subjects of 300 characters. A newline separated string is accepted."
+          }
+        },
+        "required": [
+          "commits"
+        ]
+      }
+    },
+    {
+      "id": "list_capabilities",
+      "name": "list_capabilities",
+      "description": "List what this agent does, the rule it applies and its limits. Use for discovery before running.",
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": "plan_inputs",
+      "name": "plan_inputs",
+      "description": "Plan the inputs for a tool before running it: returns the questions, the schema and a ready-to-edit example. Use when the user is unsure what to provide.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string",
+            "description": "Which tool to plan inputs for (run_full or triage_commits)."
+          },
+          "goal": {
+            "type": "string",
+            "description": "Optional freeform goal."
+          },
+          "provided": {
+            "type": "object",
+            "description": "Optional partial arguments already known."
+          }
+        }
+      }
+    },
+    {
+      "id": "discover_intent",
+      "name": "discover_intent",
+      "description": "Use when the user states a goal in their own words ('write the release notes for this tag'). It restates the goal, asks the few questions that pin the input down and proposes a ready-to-run input to confirm before running.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "goal": {
+            "type": "string",
+            "description": "What the user wants, in their own words."
+          },
+          "tool": {
+            "type": "string",
+            "description": "Which tool to plan for. Defaults to run_full."
+          },
+          "provided": {
+            "type": "object",
+            "description": "Optional partial args already known."
+          }
+        },
+        "required": [
+          "goal"
+        ]
+      }
+    }
+  ]
+}

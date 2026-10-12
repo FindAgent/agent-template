@@ -1,0 +1,35 @@
+[project]
+name = "framework-agent"
+version = "0.1.0"
+description = "FindAgent code-bundle template (Python) for an agent written in the shape of an agent framework: a local agent loop wrapped as an MCP server with the six entry tools."
+requires-python = ">=3.13"
+license = { text = "MIT" }
+authors = [{ name = "FindAgent" }]
+
+[project.urls]
+Repository = "https://github.com/FindAgent/agent-template"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = [".venv", ".findagent_pydeps"]
+
+[tool.ruff.lint]
+# T20 forbids print(): stdout belongs to the MCP stream, everything else goes to stderr.
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "T20", "C4", "PIE", "RET"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["framework_agent", "server.py", "scripts"]
+exclude = ["\\.venv", "\\.findagent_pydeps"]
+
+# The MCP SDK's decorators (list_tools, call_tool, ...) are untyped; only this module uses them.
+[[tool.mypy.overrides]]
+module = ["framework_agent.mcp_server"]
+disallow_untyped_decorators = false
+disallow_untyped_calls = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

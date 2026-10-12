@@ -1,0 +1,7 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "meeting-notes-example",
+  "description": "Turns raw meeting notes into decisions, action items with owners and open questions. An example Agent Plugins package: instructions and skills, no code.",
+  "version": "0.1.0",
+  "license": "MIT"
+}

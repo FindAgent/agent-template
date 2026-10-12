@@ -3,7 +3,7 @@
     python scripts/sync_mcp_configs.py          write them
     python scripts/sync_mcp_configs.py --check  fail when one is stale (CI)
 
-Each variant (node/, python/) is the root of a new agent, so each gets the local stdio launcher in
+Each variant (node/, python/, framework/) is the root of a new agent, so each gets the local stdio launcher in
 the shapes the common assistants read: mcp.json, .mcp.json (Claude Code), .cursor/mcp.json (Cursor)
 and .vscode/mcp.json (VS Code / GitHub Copilot). Other MCP clients take mcp.json. Hosted use needs
 no file: add the gateway address FindAgent shows on the agent's page.
@@ -39,7 +39,7 @@ def render(variant: Path) -> dict[str, str]:
 
 def main() -> int:
     stale = 0
-    for variant in (ROOT / "node", ROOT / "python"):
+    for variant in (ROOT / "node", ROOT / "python", ROOT / "framework"):
         for rel, content in render(variant).items():
             path = variant / rel
             current = path.read_text(encoding="utf-8").replace("\r\n", "\n") if path.exists() else None

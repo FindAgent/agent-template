@@ -32,9 +32,14 @@ You were pointed at this repo to produce a **code agent** for the FindAgent mark
    FindAgent platform MCP (`https://mcp.findagent.cloud/mcp`) and use `findagent_create_code_draft`; the
    provider-neutral playbooks are at https://github.com/FindAgent/agent-creators.
 
-8. **Start a complete repo in one command**: `python scripts/init_agent.py <node|python> <dir> --name "My Agent"` copies a variant and
-   adds every file a complete agent repo carries (assistant entry files, SECURITY.md, CHANGELOG.md, CI, DXT manifest, MCP configs);
-   `python scripts/check_repo_files.py <dir>` verifies it. The list is `scripts/repo-files.json`.
+8. **Start a complete repo in one command**: `python scripts/init_agent.py <variant> <dir> --name "My Agent"` copies a variant and
+   adds every file a complete repo carries (assistant entry files, SECURITY.md, CHANGELOG.md, CI, and for code agents a DXT
+   manifest and MCP configs); `python scripts/check_repo_files.py <dir>` verifies it. The list is `scripts/repo-files.json`.
+   Variants: `node`, `python`, `framework` (code agents); `package` (instructions and skills), `actions` (declarative API tools),
+   `listing` (a checklist for an MCP server somebody already runs). The last three have no code: pick the variant first
+   (see the table in `README.md`), and for them check with `npx --yes @findagent/cli@0.4.2 check <dir>` instead of the
+   code gates. The `framework` variant does not import an agent framework; it carries a tiny local agent loop and a
+   mapping to the frameworks (see `framework/README.md`), which was not run against a real framework SDK.
 
 9. **Install and versions.** The platform sandbox installs with npm and ignores `pnpm-lock.yaml`, so pin exact
    versions in `package.json`; keep `build_command` as `npm run build`. A published agent is updated by a

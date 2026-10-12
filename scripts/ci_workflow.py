@@ -7,6 +7,9 @@ names the template's package and helper scripts and fails in any other agent.
 import re
 from pathlib import Path
 
+#: The published CLI the platform checks are run with; pinned so a result is reproducible.
+CLI = "@findagent/cli@0.4.2"
+
 PYTHON_HEAD = """name: CI
 
 on:
@@ -58,8 +61,23 @@ def python_ci(dest: Path) -> str:
         steps.append(("Types", f"mypy {targets}"))
     if (dest / "tests").is_dir():
         steps.append(("Tests", "pytest"))
+    if (dest / "framework_agent").is_dir():
+        steps.append(("Generated manifest is current", "python scripts/sync_manifest.py --check"))
+        steps.append(("Platform rules (the CLI's whole-repo check)", f"npx --yes {CLI} check ."))
     steps.append(("Repository is complete", "python scripts/check_repo_files.py ."))
     return PYTHON_HEAD + "".join(f"      - name: {name}\n        run: {cmd}\n" for name, cmd in steps)
+
+
+def non_code_ci(variant: str) -> str:
+    """CI for a package, actions or listing repository: no code to build, so the platform's own check plus completeness."""
+    head = PYTHON_HEAD.split("      - uses: actions/setup-python@v5")[0] + (
+        '      - uses: actions/setup-python@v5\n        with:\n          python-version: "3.13"\n'
+    )
+    steps = []
+    if variant in ("package", "actions"):
+        steps.append(("Platform rules (the CLI's whole-repo check)", f"npx --yes {CLI} check ."))
+    steps.append(("Repository is complete", "python scripts/check_repo_files.py ."))
+    return head + "".join(f"      - name: {name}\n        run: {cmd}\n" for name, cmd in steps)
 
 
 def node_ci(root: Path) -> str:

@@ -1,0 +1,48 @@
+name: Framework agent
+
+# Every step is one of the gates described in framework/README.md. Nothing here needs a secret.
+# Copying framework/ out as your own repo? Run scripts/init_agent.py instead: it writes a CI workflow for the copy.
+
+on:
+  push:
+    branches: [main]
+    paths: ["framework/**", ".github/workflows/framework.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["framework/**", ".github/workflows/framework.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: framework-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: framework
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: framework/requirements*.txt
+      - name: Install exactly what the sandbox installs, plus the dev tools
+        run: pip install -r requirements-dev.txt
+      - name: Lint
+        run: ruff check .
+      - name: Format
+        run: ruff format --check .
+      - name: Types
+        run: mypy framework_agent server.py scripts
+      - name: Tests
+        run: pytest
+      - name: Generated files are current
+        run: python scripts/sync_manifest.py --check
+      - name: Platform rules (the CLI's whole-repo check)
+        run: npx --yes @findagent/cli@0.4.2 check .

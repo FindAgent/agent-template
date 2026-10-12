@@ -26,3 +26,11 @@ jobs:
         run: |
           python scripts/init_agent.py python "$RUNNER_TEMP/py-agent" --name "CI Python"
           python scripts/init_agent.py node "$RUNNER_TEMP/node-agent" --name "CI Node"
+          python scripts/init_agent.py framework "$RUNNER_TEMP/framework-agent" --name "CI Framework"
+          python scripts/init_agent.py package "$RUNNER_TEMP/package-agent" --name "CI Package"
+          python scripts/init_agent.py actions "$RUNNER_TEMP/actions-agent" --name "CI Actions"
+          python scripts/init_agent.py listing "$RUNNER_TEMP/listing-agent" --name "CI Listing"
+      - name: The platform's own check accepts the no-code variants
+        run: |
+          npx --yes @findagent/cli@0.4.2 check package
+          npx --yes @findagent/cli@0.4.2 check actions
