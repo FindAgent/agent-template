@@ -11,33 +11,50 @@
           {
             "name": "get_authenticated_user",
             "description": "Use to find out which GitHub account the token belongs to. Returns the account login, name and profile URL. Takes no arguments.",
-            "input_schema": { "type": "object", "properties": {} },
+            "input_schema": {
+              "type": "object",
+              "properties": {}
+            },
             "action": {
               "type": "http",
               "method": "GET",
               "url": "https://api.github.com/user",
               "auth_ref": "github_token"
             },
-            "annotations": { "readOnlyHint": true, "idempotentHint": true, "openWorldHint": true }
+            "annotations": {
+              "readOnlyHint": true,
+              "idempotentHint": true,
+              "openWorldHint": true
+            }
           },
           {
             "name": "list_repository_issues",
-            "description": "Use to list the open issues of one GitHub repository, newest first. Needs the repository owner and name. Returns issue numbers, titles, labels and links.",
+            "description": "Use to list the open issues of one GitHub repository, newest first. Needs the repository as owner/name. Returns issue numbers, titles, labels and links.",
             "input_schema": {
               "type": "object",
               "properties": {
-                "owner": { "type": "string", "description": "The account or organization that owns the repository, for example octocat." },
-                "repo": { "type": "string", "description": "The repository name, for example hello-world." }
+                "repository": {
+                  "type": "string",
+                  "description": "The repository as owner/name, for example octocat/hello-world.",
+                  "pattern": "^[A-Za-z0-9-]{1,39}/[A-Za-z0-9._-]{1,100}$",
+                  "maxLength": 140
+                }
               },
-              "required": ["owner", "repo"]
+              "required": [
+                "repository"
+              ]
             },
             "action": {
               "type": "http",
               "method": "GET",
-              "url": "https://api.github.com/repos/{owner}/{repo}/issues",
+              "url": "https://api.github.com/search/issues?q=repo:{repository}+is:issue+is:open&sort=created&order=desc",
               "auth_ref": "github_token"
             },
-            "annotations": { "readOnlyHint": true, "idempotentHint": true, "openWorldHint": true }
+            "annotations": {
+              "readOnlyHint": true,
+              "idempotentHint": true,
+              "openWorldHint": true
+            }
           }
         ],
         "credential_slots": [
@@ -48,7 +65,9 @@
             "env": "GITHUB_TOKEN",
             "type": "secret",
             "required": true,
-            "allowed_hosts": ["api.github.com"]
+            "allowed_hosts": [
+              "api.github.com"
+            ]
           }
         ]
       }
