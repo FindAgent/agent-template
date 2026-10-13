@@ -195,6 +195,14 @@ script calls `tools/call`, which the platform refuses for every creator panel),
 `open_input_schema` (a tool with no typed `input_schema`), `code_bundle_no_skills`, `connectors_hosts_missing`
 and `findagent_json_missing`. A smoke call of one tool in the sandbox is opt-in and advisory as well.
 
+## If your tool checks something, end with a decision line
+
+An agent that reviews, tests or audits is often one member of a department, and the department can only act on
+what it can read. End such a tool's answer with one fixed line, for example `VERDICT: PASS` or
+`VERDICT: BLOCKED`, and say so in the tool description. A workflow department can match that line with its
+`contains` condition; a hub department quotes it in its report instructions. Keep the checker a different
+agent from the one that produced the work, and read the producer's output rather than its summary.
+
 ## What `check:platform` checks
 
 One command, both variants, the rules above as code: `findagent.json` shape and `skills[]` against the
