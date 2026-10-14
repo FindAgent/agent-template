@@ -203,6 +203,10 @@ what it can read. End such a tool's answer with one fixed line, for example `VER
 `contains` condition; a hub department quotes it in its report instructions. Keep the checker a different
 agent from the one that produced the work, and read the producer's output rather than its summary.
 
+Keep that answer short. A hosted department run stops after about 740 seconds, nearly all of it spent writing
+the members' answers, so the answers of every member together have to fit. Give a member a length budget in its
+description, write one line per row, and carry earlier notes as they stand instead of retyping them.
+
 ## What `check:platform` checks
 
 One command, both variants, the rules above as code: `findagent.json` shape and `skills[]` against the
