@@ -57,7 +57,8 @@ that it is your own work.
 5. **Check the platform rules**: `pnpm check:platform` (Node) or `python scripts/check_platform.py`
    (Python). It fails in seconds on the things that otherwise sit in review. For the platform's own
    whole-repo check (six entry tools, egress, lockfile, secret shapes), run `npx --yes @findagent/cli@latest check .`:
-   it is offline and read-only, and narrower than `check:platform`: it does not yet enforce the 500-character tool
+   it is offline and read-only (Node: run it before `pnpm install`, or delete the `pnpm-workspace.yaml` that pnpm 11
+   writes, because the CLI counts a file on disk as tracked), and narrower than `check:platform`: it does not yet enforce the 500-character tool
    description, a wildcard host, a credential slot without a host or the runtime version, so run both.
 6. **Submit** at <https://findagent.cloud/submit>: choose **Agent**, then the **GitHub** door (a code agent
    comes in from a repository; Upload and the Editor take instructions, skills and actions only), pick your
