@@ -12,8 +12,14 @@ Variants:
 Copies the variant as the new repository root and adds everything a complete agent repo carries
 (scripts/repo-files.json is the one list): the assistant entry files (AGENTS.md, CLAUDE.md,
 GEMINI.md, CONVENTIONS.md, .aider.conf.yml, Copilot and Cursor rules), SECURITY.md, CHANGELOG.md, the
-CI workflow, and for a code variant a DXT manifest.json (Python and framework) and the MCP client configs
-generated from findagent.json. It then runs the completeness check. It never overwrites an existing file.
+CI workflow, and for a code variant a DXT manifest.json and the MCP client configs generated from
+findagent.json. It renames the template's own name (package name, DXT manifest, MCP server key) to the new
+agent's, so the generated files agree with each other from the first commit. It then runs the completeness
+check. It never overwrites a file it did not copy from the template.
+
+A package, actions or listing repository gets no AGENTS.md and no .cursor/rules: FindAgent reads both as
+buyer-facing skills of a package (packages/repo-check/src/skill-sources.ts), so the assistant's instructions
+live in CONVENTIONS.md there, which the platform ignores.
 """
 
 import json
@@ -51,9 +57,9 @@ def arg(flag: str, default: str) -> str:
     return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv else default
 
 
-def write(dest: Path, rel: str, text: str) -> None:
+def write(dest: Path, rel: str, text: str, replace: bool = False) -> None:
     path = dest / rel
-    if path.exists():
+    if path.exists() and not replace:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8", newline="\n")
@@ -129,21 +135,19 @@ def scaffold_non_code(variant: str, dest: Path, fill: bool) -> int:
             plugin.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
         tagline = str(data.get("description", tagline))
 
-    pointer = f"# {name}\n\nRead `AGENTS.md` first and follow it.\n"
     entry = (
-        f"# {name}: instructions for an AI assistant\n\n{tagline}\n\n{NON_CODE_RULES[variant]}\n"
+        f"# {name}: instructions for an AI assistant\n\n{tagline}\n\n{NON_CODE_RULES[variant]}"
+        "- Do not add an `AGENTS.md` or a `.cursor/rules/` file to this repository: FindAgent reads both as buyer-facing "
+        "skills, and the buyer's model would receive these instructions. They live in `CONVENTIONS.md`, which the platform ignores.\n\n"
         "Say which assistant and tools you used and which checks you ran. Do not submit or publish for the user: they submit at "
         "https://findagent.cloud/submit, or over MCP.\n\n"
         "Reference: https://github.com/FindAgent/agent-template and the playbooks in https://github.com/FindAgent/agent-creators.\n"
     )
-    write(dest, "AGENTS.md", entry)
-    write(dest, "CLAUDE.md", "@AGENTS.md\n")
-    write(dest, "GEMINI.md", "@AGENTS.md\n")
-    write(dest, "CONVENTIONS.md", pointer)
-    write(dest, ".aider.conf.yml", "read:\n  - AGENTS.md\n")
-    write(dest, ".github/copilot-instructions.md", pointer)
-    write(dest, ".cursor/rules/findagent-code-agent.mdc",
-          f"---\ndescription: Work on {name}, a FindAgent {variant} repository\nalwaysApply: true\n---\n\n{pointer}")
+    write(dest, "CONVENTIONS.md", entry)
+    write(dest, "CLAUDE.md", "@CONVENTIONS.md\n")
+    write(dest, "GEMINI.md", "@CONVENTIONS.md\n")
+    write(dest, ".aider.conf.yml", "read:\n  - CONVENTIONS.md\n")
+    write(dest, ".github/copilot-instructions.md", entry)
     write(dest, "SECURITY.md",
           f"# Security\n\nReport a vulnerability privately to the maintainers of {name} (use the repository's security advisory "
           "form). Do not open a public issue for a vulnerability. Never include a real credential in a report.\n")
@@ -155,8 +159,49 @@ def scaffold_non_code(variant: str, dest: Path, fill: bool) -> int:
     if not (dest / ".git").exists():
         subprocess.call(["git", "init", "-q", str(dest)])
 
+    return finish(dest, variant)
+
+
+#: What init cannot know and the creator must set before publishing.
+NOTES = (
+    "Set before you publish: the repository URL (package.json `repository` / pyproject.toml `Repository`), "
+    "the copyright holder in LICENSE, and `author` in manifest.json."
+)
+
+
+def finish(dest: Path, variant: str) -> int:
+    """Run the completeness check, then say what is still the creator's to set."""
     checker = ROOT / "scripts" / "check_repo_files.py"
-    return subprocess.call([sys.executable, str(checker), str(dest), "--runtime", variant])
+    code = subprocess.call([sys.executable, "-I", str(checker), str(dest), "--runtime", variant])
+    if variant in CODE_VARIANTS:
+        sys.stdout.write(f"{NOTES}\n")
+    return code
+
+
+def rename_identity(variant: str, dest: Path, slug: str, name: str) -> None:
+    """Give the copy its own name where the template's still stands: the package name and the DXT manifest.
+
+    Node's manifest.json is generated from findagent.json and package.json (`pnpm sync:manifest`), so it is rewritten
+    here in the same shape; otherwise `pnpm check:generated` fails on the first run.
+    """
+    if variant == "node":
+        package = json.loads((dest / "package.json").read_text(encoding="utf-8"))
+        package["name"] = slug
+        if isinstance(package.get("bin"), dict):
+            package["bin"] = {slug: next(iter(package["bin"].values()))}
+        text = json.dumps(package, indent=2, ensure_ascii=False) + "\n"
+        (dest / "package.json").write_text(text, encoding="utf-8", newline="\n")
+        dxt_path = dest / "manifest.json"
+        if dxt_path.exists():
+            dxt = json.loads(dxt_path.read_text(encoding="utf-8"))
+            dxt["name"], dxt["display_name"] = slug, name
+            text = json.dumps(dxt, indent=2, ensure_ascii=False) + "\n"
+            dxt_path.write_text(text, encoding="utf-8", newline="\n")
+        return
+    pyproject = dest / "pyproject.toml"
+    renamed, count = re.subn(r'(?m)^name = "[^"]*"', f'name = "{slug}"', pyproject.read_text(encoding="utf-8"), count=1)
+    if count == 1:
+        pyproject.write_text(renamed, encoding="utf-8", newline="\n")
 
 
 def main() -> int:
@@ -185,11 +230,14 @@ def main() -> int:
 
     manifest = json.loads((dest / "findagent.json").read_text(encoding="utf-8"))
     name = arg("--name", manifest.get("name", "My agent"))
-    slug = arg("--slug", re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-"))
+    slug = arg("--slug", re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")) or "my-agent"
 
     if not fill:
         manifest["name"] = name
-        (dest / "findagent.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
+        # ensure_ascii=False: the sync scripts write findagent.json that way, so `check:generated` must see the same bytes.
+        text = json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
+        (dest / "findagent.json").write_text(text, encoding="utf-8", newline="\n")
+        rename_identity(variant, dest, slug, name)
 
     if variant in ("python", "framework"):
         server = manifest["mcp"]
@@ -248,13 +296,12 @@ def main() -> int:
     import sync_mcp_configs  # noqa: PLC0415
 
     for rel, content in sync_mcp_configs.render(dest).items():
-        write(dest, rel, content)
+        write(dest, rel, content, replace=not fill)
 
     if not (dest / ".git").exists():
         subprocess.call(["git", "init", "-q", str(dest)])
 
-    checker = ROOT / "scripts" / "check_repo_files.py"
-    return subprocess.call([sys.executable, str(checker), str(dest), "--runtime", variant])
+    return finish(dest, variant)
 
 
 if __name__ == "__main__":

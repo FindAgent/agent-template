@@ -6,6 +6,7 @@ import pytest
 
 from agent_template.config import Config
 from agent_template.http import HttpFail, HttpOk, classify_error, get_json, reset_time
+from agent_template.meta import AGENT_NAME
 
 from .conftest import NOW, TEST_CONFIG, Fake, Reply
 
@@ -119,7 +120,7 @@ async def test_sends_get_with_a_user_agent_and_asks_for_json() -> None:
     await get(fake)
     request = fake.requests[0]
     assert request.method == "GET"
-    assert request.headers["user-agent"].startswith("agent-template/")
+    assert request.headers["user-agent"].startswith(f"{AGENT_NAME}/")
     assert request.headers["accept"] == "application/json"
 
 

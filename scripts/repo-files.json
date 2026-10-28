@@ -1,5 +1,5 @@
 {
-  "$comment": "The one definition of a complete agent repository. scripts/init_agent.py creates these, scripts/check_repo_files.py verifies them. 'all' + node|python|framework describe a code agent; 'common' + package|actions|listing describe a repository with no code.",
+  "$comment": "The one definition of a complete agent repository. scripts/init_agent.py creates these, scripts/check_repo_files.py verifies them. 'all' + node|python|framework describe a code agent; 'common' + package|actions|listing describe a repository with no code. 'common' has no AGENTS.md and no .cursor rule on purpose: the platform reads both as buyer-facing skills of a package (packages/repo-check/src/skill-sources.ts), so a no-code repository keeps its instructions in CONVENTIONS.md, which the platform ignores.",
   "all": [
     "README.md",
     "LICENSE",
@@ -35,13 +35,11 @@
     "CHANGELOG.md",
     ".gitignore",
     ".gitattributes",
-    "AGENTS.md",
     "CLAUDE.md",
     "GEMINI.md",
     "CONVENTIONS.md",
     ".aider.conf.yml",
     ".github/copilot-instructions.md",
-    ".cursor/rules/findagent-code-agent.mdc",
     ".github/workflows/ci.yml"
   ],
   "package": ["plugin.json", "skills/instructions/SKILL.md"],
