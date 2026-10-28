@@ -1,9 +1,15 @@
 # Instructions for an AI assistant building a FindAgent code agent from this repository
 
+This file is the single source of the assistant entry files of this repository; `CLAUDE.md`, `GEMINI.md`,
+`CONVENTIONS.md`, `.aider.conf.yml`, `.github/copilot-instructions.md` and `.cursor/rules/` are generated from it by
+`python scripts/build_adapters.py` (CI runs it with `--check`). Edit this file, never those.
+
 You were pointed at this repo to produce a **code agent** for the FindAgent marketplace. Work like this.
 
 1. **Pick one variant** and treat its folder as the repo root of the new agent: `node/` (Node 22 or 24,
-   TypeScript, pnpm) or `python/` (Python 3.13, pip). Never mix them. Do not edit the other folder.
+   TypeScript, pnpm), `python/` (Python 3.13, pip) or `framework/` (Python 3.13, an agent loop in the shape of
+   an agent framework) for a code agent; `package/`, `actions/` or `listing/` when there is no code (step 8).
+   Never mix them. Do not edit the other folders.
 2. **Read first**: `README.md` (the platform checklist and pitfalls), then the variant's `README.md`, its
    `findagent.json`, its tools file (`node/src/mcp/tools.ts` or `python/agent_template/tools.py`) and its
    checker (`node/scripts/check-platform.mjs` or `python/scripts/check_platform.py`).
@@ -22,7 +28,8 @@ You were pointed at this repo to produce a **code agent** for the FindAgent mark
    no sample data, no demo mode, no unfinished-work markers in shipped code. A failure is never reported
    as "not found", and a signal that could not be measured is "not checked: <reason>", never zero.
 6. **Verify before you say done**: run the variant's full gates (install, typecheck or lint, tests,
-   `check:platform` / `check_platform.py`) and the live script (`pnpm live` / `python scripts/live_check.py`)
+   `check:platform` / `check_platform.py`; the panel tests need Chromium: `pnpm exec playwright install chromium` or
+   `python -m playwright install chromium`) and the live script (`pnpm live` / `python scripts/live_check.py`)
    against the real upstream, and show their real output. Then stop: **do not submit or publish**. The
    person submits at https://findagent.cloud/submit through the GitHub door.
 
@@ -38,7 +45,9 @@ You were pointed at this repo to produce a **code agent** for the FindAgent mark
    Variants: `node`, `python`, `framework` (code agents); `package` (instructions and skills), `actions` (declarative API tools),
    `listing` (a checklist for an MCP server somebody already runs). The last three have no code: pick the variant first
    (see the table in `README.md`), and for them check with `npx --yes @findagent/cli@latest check <dir>` instead of the
-   code gates. The `framework` variant does not import an agent framework; it carries a tiny local agent loop and a
+   code gates. A new package, actions or listing repo gets no `AGENTS.md` and no `.cursor/rules/`: FindAgent reads
+   both as buyer-facing skills, so its assistant instructions live in `CONVENTIONS.md`, which the platform ignores.
+   The `framework` variant does not import an agent framework; it carries a tiny local agent loop and a
    mapping to the frameworks (see `framework/README.md`), which was not run against a real framework SDK.
 
 9. **Install and versions.** The platform sandbox installs with npm and ignores `pnpm-lock.yaml`, so pin exact
