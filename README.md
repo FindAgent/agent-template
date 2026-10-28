@@ -70,6 +70,22 @@ that it is your own work.
 
 Nothing in this repository submits or publishes anything for you.
 
+## Other kinds of agent
+
+The six folders above are the kinds that have a template. For the rest, use the playbooks in
+[FindAgent/agent-creators](https://github.com/FindAgent/agent-creators) (plain Markdown; any assistant that can read
+files and run commands can follow them):
+
+| You want | Start with |
+|---|---|
+| A **department** (a team of published agents) | [`department-creator`](https://github.com/FindAgent/agent-creators/blob/main/playbooks/agents/department-creator.md) |
+| To wrap an **OpenAPI** spec as tools | [`actions/`](actions) here for the shape, then [`actions-agent-creator`](https://github.com/FindAgent/agent-creators/blob/main/playbooks/agents/actions-agent-creator.md); the web import takes an OpenAPI file directly and stops at 40 operations |
+| To list an **MCP server** somebody runs | [`listing/`](listing) here, then [`mcp-listing-creator`](https://github.com/FindAgent/agent-creators/blob/main/playbooks/agents/mcp-listing-creator.md) |
+| To **port an existing repository** (a skills collection, a vendor plugin, a rules repo, an MCP server, a framework agent) | [`port-agent-creator`](https://github.com/FindAgent/agent-creators/blob/main/playbooks/agents/port-agent-creator.md), which hands the work to the matching creator |
+
+`scripts/init_agent.py` needs Python 3.10 or newer and nothing else (standard library only), even for a Node agent. With
+no Python, copy the folder by hand and follow the 5-minute path.
+
 ## Which assistants this was checked with
 
 The instructions are plain Markdown (`AGENTS.md` is the entry point; `CLAUDE.md`, `GEMINI.md`,
@@ -109,8 +125,9 @@ been run against this template.
 tool the server registers (`id` and `name` equal to the tool's real name, a description, and the tool's
 `input_schema`, which is what a client uses to name the arguments). Without `skills[]` the agent is
 served with an empty tool list. `sync:manifest` / `sync_manifest.py` rewrites `skills[]` from the real
-server. `runtime.version` is `22` or `24` for Node and `3.13` for Python: those are the only runtimes the
-sandbox has (Node 20 is refused by the platform's schema enum).
+server. Set `runtime.version` to `22` or `24` for Node and `3.13` for Python: those are the versions this
+template is built and tested on. Any other value is not guaranteed: the platform does not tie the field to a list
+today, so a build may run on a different runtime than the one you wrote.
 
 **b. Listing text.** `example_prompts` needs 1 to 5 prompts or Submit refuses; also a `tagline` (at most
 140 characters), a `description` and `tags`.
@@ -170,7 +187,7 @@ platform stores it (replacing the previous value) and strips `__memory` before t
 and the buyer. A value of 64 KB or more, or one that contains a secret, is rejected and the old memory is
 kept, so keep what you return bounded (newest N entries, a size cap per entry). It exists for hosted
 code-bundle runs only (a local run has no memory), it is private to one user and one agent, and it is a cache,
-not a database: do not keep credentials in it. This template does not use it; the checker does not require it.
+not a database: do not keep credentials in it. This template does not use it; the checker does not require it. A commented example is in [`node/README.md`](node/README.md#optional-a-credential-memory-and-local-serving).
 
 ## Updating a published agent
 
@@ -203,9 +220,10 @@ what it can read. End such a tool's answer with one fixed line, for example `VER
 `contains` condition; a hub department quotes it in its report instructions. Keep the checker a different
 agent from the one that produced the work, and read the producer's output rather than its summary.
 
-Keep that answer short. A hosted department run stops after about 740 seconds, nearly all of it spent writing
-the members' answers, so the answers of every member together have to fit. Give a member a length budget in its
-description, write one line per row, and carry earlier notes as they stand instead of retyping them.
+Keep that answer short. A hosted department run gets about 740 seconds, nearly all of it spent writing the members'
+answers, so the answers of every member together have to fit. A run the clock stops is continued as a new run (at most
+twice) with the finished work carried over, but every continuation spends its tokens again. Give a member a length
+budget in its description, write one line per row, and carry earlier notes as they stand instead of retyping them.
 
 ## What `check:platform` checks
 
@@ -219,7 +237,9 @@ copy of the repo and expects that exact finding, so the checker cannot silently 
 ```
 node/     findagent.json, src/, panel/, ui/ (built panel), scripts/, test/, pnpm-lock.yaml
 python/   findagent.json, agent_template/, server.py, panel/, ui/ (built panel), scripts/, tests/
-scripts/  conformance check: both variants keep the same tools, listing and panel
+scripts/  init_agent.py (scaffold), check_repo_files.py (completeness), check_conformance.py (the variants meet the
+          contract), check_scaffold.py (scaffold a variant and run its gates), build_adapters.py (assistant files
+          from AGENTS.md), cli-version.txt (the platform CLI version CI runs)
 ```
 
 ## License
