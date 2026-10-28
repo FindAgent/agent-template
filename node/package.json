@@ -37,8 +37,8 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.31.0",
-    "zod": "3.25.76"
+    "@modelcontextprotocol/sdk": "1.32.0",
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@playwright/test": "1.61.1",
