@@ -7,10 +7,10 @@ name: Python agent
 on:
   push:
     branches: [main]
-    paths: ["python/**", ".github/workflows/python.yml"]
+    paths: ["python/**", "scripts/cli-version.txt", ".github/workflows/python.yml"]
   pull_request:
     branches: [main]
-    paths: ["python/**", ".github/workflows/python.yml"]
+    paths: ["python/**", "scripts/cli-version.txt", ".github/workflows/python.yml"]
 
 permissions:
   contents: read
@@ -51,3 +51,5 @@ jobs:
         run: python scripts/sync_manifest.py --check && python scripts/build_panel.py --check
       - name: Platform rules, including a binary wheel for every pin
         run: python scripts/check_platform.py --wheels
+      - name: Platform rules (the CLI's whole-repo check)
+        run: npx --yes "@findagent/cli@$(cat ../scripts/cli-version.txt)" check .

@@ -33,7 +33,7 @@ account, nothing is uploaded. Fix every FAIL and explain every WARN.
 
 ## Assistant entry files become skills
 
-`python scripts/init_agent.py` adds `AGENTS.md`, `CLAUDE.md`, `GEMINI.md` and the Copilot, Cursor and Aider files so an assistant can work on this repository. When FindAgent imports the repository, a root `AGENTS.md` and `.cursor/rules/*` are read as **skills** (they count toward the 40 and reach the buyer's model); `CLAUDE.md`, `GEMINI.md`, `CONVENTIONS.md` and `copilot-instructions.md` are not package parts. Run `npx --yes @findagent/cli@latest check .` to see exactly what is kept, and delete `AGENTS.md` and `.cursor/rules/` from the copy you submit (or keep them on purpose and write them for the buyer's model).
+When FindAgent imports a repository, a root `AGENTS.md` and `.cursor/rules/*` are read as **skills** (they count toward the 40 and reach the buyer's model); `CLAUDE.md`, `GEMINI.md`, `CONVENTIONS.md` and `copilot-instructions.md` are not package parts. So `python scripts/init_agent.py` writes no `AGENTS.md` and no `.cursor/rules/` here: it adds `CONVENTIONS.md` (the instructions for an assistant working on this repository), `CLAUDE.md`, `GEMINI.md` and the Copilot and Aider files, which all point at or repeat it. Do not add the other two unless you write them for the buyer's model. Run `npx --yes @findagent/cli@latest check .` to see exactly what is kept.
 
 ## Submit
 

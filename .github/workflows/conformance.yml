@@ -1,6 +1,7 @@
 name: Conformance
 
-# The node/ and python/ variants must stay one agent in two languages.
+# The variants must keep meeting the platform contract (node/ and python/ stay one agent in two languages), the
+# generated assistant files must match AGENTS.md, and a repository scaffolded from each variant must pass its own gates.
 
 on:
   push:
@@ -11,26 +12,56 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: conformance-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   conformance:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: python scripts/check_conformance.py
-      - run: python scripts/sync_mcp_configs.py --check
-      - name: A scaffolded repo of each variant is complete
+      - name: Variants meet the contract and the CLI is pinned
+        run: python scripts/check_conformance.py
+      - name: MCP client configs are generated from findagent.json
+        run: python scripts/sync_mcp_configs.py --check
+      - name: Assistant entry files are generated from AGENTS.md
+        run: python scripts/build_adapters.py --check
+      - name: The helper scripts are lint-clean (the scaffold copies check_repo_files.py into every new agent)
         run: |
-          python scripts/init_agent.py python "$RUNNER_TEMP/py-agent" --name "CI Python"
-          python scripts/init_agent.py node "$RUNNER_TEMP/node-agent" --name "CI Node"
-          python scripts/init_agent.py framework "$RUNNER_TEMP/framework-agent" --name "CI Framework"
-          python scripts/init_agent.py package "$RUNNER_TEMP/package-agent" --name "CI Package"
-          python scripts/init_agent.py actions "$RUNNER_TEMP/actions-agent" --name "CI Actions"
-          python scripts/init_agent.py listing "$RUNNER_TEMP/listing-agent" --name "CI Listing"
-      - name: The platform's own check accepts the no-code variants
+          pip install ruff==0.16.9 mypy==2.3.1
+          ruff check scripts
+          mypy --strict scripts/check_repo_files.py scripts/build_adapters.py scripts/check_conformance.py scripts/check_scaffold.py
+      - name: The platform's own check accepts the no-code variants (CLI pinned in scripts/cli-version.txt)
         run: |
-          npx --yes @findagent/cli@latest check package
-          npx --yes @findagent/cli@latest check actions
+          cli="@findagent/cli@$(cat scripts/cli-version.txt)"
+          npx --yes "$cli" check package
+          npx --yes "$cli" check actions
+
+  scaffold:
+    # A new agent starts from what init_agent.py writes, not from the folder in this repository, so the gates run there.
+    needs: conformance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [node, python, framework, package, actions, listing]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: pnpm/action-setup@v4
+        if: matrix.variant == 'node'
+        with:
+          version: 11.0.8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Scaffold ${{ matrix.variant }} and run the gates of the new repository, then the pinned platform CLI
+        run: python scripts/check_scaffold.py ${{ matrix.variant }}

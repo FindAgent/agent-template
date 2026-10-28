@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { classifyThrown, getJson, resetTime } from "../src/http.js";
+import { AGENT_NAME } from "../src/meta.js";
 import { NOW, TEST_CONFIG, fakeCrates } from "./helpers/fakeCrates.js";
 
 const URL_ = "https://crates.io/api/v1/crates/thing";
@@ -132,7 +133,10 @@ describe("every failure is its own class", () => {
     await getJson(URL_, opts(fake.fetch));
     const init = fake.calls[0]!.init!;
     expect(init.method).toBe("GET");
-    expect((init.headers as Record<string, string>)["user-agent"]).toMatch(/^agent-template\//);
+    // The name comes from package.json, so a renamed copy of the template keeps passing.
+    expect((init.headers as Record<string, string>)["user-agent"]).toMatch(
+      new RegExp(`^${AGENT_NAME}/`),
+    );
     expect((init.headers as Record<string, string>)["accept"]).toBe("application/json");
   });
 });

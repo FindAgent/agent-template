@@ -46,3 +46,50 @@ git-ignored on purpose, because a tracked one makes the platform build fail. Nev
 
 `build_command` is `npm run build`: the sandbox installs with npm from `package.json`, and the build
 script only runs `tsc` and the panel build.
+
+## Optional: a credential, memory and local serving
+
+This agent calls a public API, so `findagent.json` has no credential slot, no memory and serves only hosted. None of
+the three is live here. If yours needs one, this is the shape (a sketch, not a file to paste: `jsonc` allows comments,
+`findagent.json` does not).
+
+**A credential slot.** A slot declares a secret you need and the one place it may go; it never holds a value.
+
+```jsonc
+{
+  "allowed_hosts": ["api.example.com"],            // every host the code calls, the slot's host included
+  "credential_slots": [
+    {
+      "ref": "example_token",                      // the slot's name
+      "label": "Example API token",                // what the buyer is asked for
+      "description": "Read access to your Example account. Sent only to api.example.com.",
+      "env": "EXAMPLE_TOKEN",                      // the code reads process.env.EXAMPLE_TOKEN
+      "type": "secret",
+      "required": true,                            // false: the tools still work without it
+      "auth_scheme": "bearer",                     // bearer | basic | raw | header (header also needs "header_name")
+      "allowed_hosts": ["api.example.com"]         // the only host the secret may reach
+    }
+    // The address belongs to the buyer (self-hosted)? Drop "allowed_hosts" from the slot and set
+    // "install_host": true instead: the buyer supplies the host when connecting. Never a slot with neither.
+  ]
+}
+```
+
+Pick `auth_scheme` from what the API wants, not from the slot's name: a Bearer token sent to a Basic-auth API is
+rejected. `pnpm check:platform` fails on a slot that holds a value, on a slot with no destination and on code that reads
+a credential nobody declared. Adding a slot to a published agent holds every connected buyer until they acknowledge it.
+
+**Memory.** A hosted run can keep a small JSON state per buyer and agent (see "Agent memory" in the root README):
+
+```ts
+// Read first: the variable is unset on a first run or when the memory is empty.
+const file = process.env.FINDAGENT_MEMORY_FILE;
+const memory = file ? (JSON.parse(readFileSync(file, "utf8")) as { seen?: string[] }) : {};
+// ...and return the new state under __memory in the structured result: under 64 KB, bounded, never a secret.
+return { ...result, __memory: { seen: [...(memory.seen ?? []), crate].slice(-50) } };
+```
+
+**Local serving.** `"serve": ["hosted"]` is the default. `["hosted", "local"]` also lets a buyer download the agent and run
+it on their own machine, with their consent, through `@findagent/mcp`. Only add `local` if the server runs from the
+built `dist/` with nothing but the buyer's own environment (no hosted-only path, no value from the platform); the Node
+and Python variants of this template keep the same `serve`, so changing one means changing both.

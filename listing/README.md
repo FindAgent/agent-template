@@ -26,4 +26,7 @@ The connection model is derived from what you declare, never typed by hand.
 3. A person reviews the entry. Nothing here auto-approves.
 4. Later changes go through `findagent_reintrospect_mcp`.
 
+A listing is not a package: do not put an `AGENTS.md` or `.cursor/rules/` file in the repository you list. FindAgent reads both as
+skills of a package. `python scripts/init_agent.py listing` writes the assistant instructions to `CONVENTIONS.md`, which it ignores.
+
 Nothing in this repository submits or publishes anything for you.
