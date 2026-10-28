@@ -7,8 +7,12 @@ names the template's package and helper scripts and fails in any other agent.
 import re
 from pathlib import Path
 
-#: The published CLI the platform checks are run with: always the latest, so the checks follow the platform.
+#: The published CLI a NEW agent runs: always the latest, so its checks follow the platform.
+#: The template itself pins it (scripts/cli-version.txt).
 CLI = "@findagent/cli@latest"
+
+#: The one way the template's own workflows run the CLI; node_ci rewrites it for a new agent.
+TEMPLATE_CLI = 'npx --yes "@findagent/cli@$(cat ../scripts/cli-version.txt)" check .'
 
 PYTHON_HEAD = """name: CI
 
@@ -59,11 +63,16 @@ def python_ci(dest: Path) -> str:
     steps = [("Lint", "ruff check .")]
     if configured and targets:
         steps.append(("Types", f"mypy {targets}"))
+    if (dest / "tests" / "test_panel.py").exists():
+        steps.append(("Chromium for the panel tests", "python -m playwright install --with-deps chromium"))
     if (dest / "tests").is_dir():
         steps.append(("Tests", "pytest"))
-    if (dest / "framework_agent").is_dir():
-        steps.append(("Generated manifest is current", "python scripts/sync_manifest.py --check"))
-        steps.append(("Platform rules (the CLI's whole-repo check)", f"npx --yes {CLI} check ."))
+    generated = [f"python scripts/{s}.py --check" for s in ("sync_manifest", "build_panel") if (dest / "scripts" / f"{s}.py").exists()]
+    if generated:
+        steps.append(("Generated files are current", " && ".join(generated)))
+    if (dest / "scripts" / "check_platform.py").exists():
+        steps.append(("Platform rules, including a binary wheel for every pin", "python scripts/check_platform.py --wheels"))
+    steps.append(("Platform rules (the CLI's whole-repo check)", f"npx --yes {CLI} check ."))
     steps.append(("Repository is complete", "python scripts/check_repo_files.py ."))
     return PYTHON_HEAD + "".join(f"      - name: {name}\n        run: {cmd}\n" for name, cmd in steps)
 
@@ -86,6 +95,11 @@ def node_ci(root: Path) -> str:
     text = re.sub(r"\n    defaults:\n      run:\n        working-directory: \w+", "", text)
     text = re.sub(r"# Copying[^\n]*\n#[^\n]*\n", "", text)
     text = text.replace("working-directory: node/", "").replace("node/", "")
+    # The template pins the CLI from scripts/cli-version.txt, which a new agent does not have.
+    text = text.replace(TEMPLATE_CLI, f"npx --yes {CLI} check .")
+    if "cli-version" in text:
+        raise SystemExit("ci_workflow: node.yml pins the CLI in a form node_ci does not rewrite")
+    text = text.rstrip("\n") + "\n      - name: Repository is complete\n        run: python scripts/check_repo_files.py .\n"
     return text.replace("name: Node agent", "name: CI", 1)
 
 

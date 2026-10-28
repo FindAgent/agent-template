@@ -1,0 +1,19 @@
+# Lints the helper scripts in scripts/ with the same rules every Python variant uses (see python/pyproject.toml),
+# because scripts/check_repo_files.py is copied into every new agent and must pass ITS ruff run.
+line-length = 120
+target-version = "py313"
+# The variants carry their own config. The three scripts below predate this lint (long prompt strings, print());
+# clean them and drop them from the list. Do not add scripts/check_repo_files.py here: init copies it into every new agent.
+extend-exclude = [
+  ".venv",
+  ".findagent_pydeps",
+  "node",
+  "python",
+  "framework",
+  "scripts/init_agent.py",
+  "scripts/ci_workflow.py",
+  "scripts/sync_mcp_configs.py",
+]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "T20", "C4", "PIE", "RET"]

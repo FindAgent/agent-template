@@ -6,10 +6,10 @@ name: Framework agent
 on:
   push:
     branches: [main]
-    paths: ["framework/**", ".github/workflows/framework.yml"]
+    paths: ["framework/**", "scripts/cli-version.txt", ".github/workflows/framework.yml"]
   pull_request:
     branches: [main]
-    paths: ["framework/**", ".github/workflows/framework.yml"]
+    paths: ["framework/**", "scripts/cli-version.txt", ".github/workflows/framework.yml"]
 
 permissions:
   contents: read
@@ -44,5 +44,5 @@ jobs:
         run: pytest
       - name: Generated files are current
         run: python scripts/sync_manifest.py --check
-      - name: Platform rules (the CLI's whole-repo check)
-        run: npx --yes @findagent/cli@latest check .
+      - name: Platform rules (the CLI's whole-repo check, version pinned in scripts/cli-version.txt)
+        run: npx --yes "@findagent/cli@$(cat ../scripts/cli-version.txt)" check .

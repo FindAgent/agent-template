@@ -7,10 +7,10 @@ name: Node agent
 on:
   push:
     branches: [main]
-    paths: ["node/**", ".github/workflows/node.yml"]
+    paths: ["node/**", "scripts/cli-version.txt", ".github/workflows/node.yml"]
   pull_request:
     branches: [main]
-    paths: ["node/**", ".github/workflows/node.yml"]
+    paths: ["node/**", "scripts/cli-version.txt", ".github/workflows/node.yml"]
 
 permissions:
   contents: read
@@ -54,3 +54,5 @@ jobs:
         run: pnpm check:generated
       - name: Platform rules
         run: pnpm check:platform
+      - name: Platform rules (the CLI's whole-repo check, version pinned in scripts/cli-version.txt)
+        run: npx --yes "@findagent/cli@$(cat ../scripts/cli-version.txt)" check .
