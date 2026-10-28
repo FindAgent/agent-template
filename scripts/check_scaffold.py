@@ -58,6 +58,11 @@ def main() -> int:
     init = subprocess.call([sys.executable, "-I", init_script, variant, str(dest), "--name", f"CI {variant}"])
     out(f"EXIT={init} init {variant}")
     failed = [] if init == 0 else ["init"]
+    if init == 0:
+        # A new agent is checked after its first commit. Staging gives the platform CLI the same view: it asks git
+        # which files are tracked, and in a repository with nothing staged it would count the untracked
+        # pnpm-workspace.yaml that `pnpm install` writes (git-ignored, as it should be) as a tracked file.
+        subprocess.call(["git", "add", "-A"], cwd=dest)
 
     ci = (dest / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8") if init == 0 else ""
     steps = ci_steps(ci)
