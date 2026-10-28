@@ -51,5 +51,5 @@ jobs:
         run: python scripts/sync_manifest.py --check && python scripts/build_panel.py --check
       - name: Platform rules, including a binary wheel for every pin
         run: python scripts/check_platform.py --wheels
-      - name: Platform rules (the CLI's whole-repo check, version pinned in scripts/cli-version.txt)
+      - name: Platform rules (the CLI's whole-repo check)
         run: npx --yes "@findagent/cli@$(cat ../scripts/cli-version.txt)" check .

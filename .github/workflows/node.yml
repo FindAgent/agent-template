@@ -54,5 +54,5 @@ jobs:
         run: pnpm check:generated
       - name: Platform rules
         run: pnpm check:platform
-      - name: Platform rules (the CLI's whole-repo check, version pinned in scripts/cli-version.txt)
+      - name: Platform rules (the CLI's whole-repo check)
         run: npx --yes "@findagent/cli@$(cat ../scripts/cli-version.txt)" check .
