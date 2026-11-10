@@ -1,6 +1,6 @@
 # FindAgent code agent template
 
-Working, copyable starting points for the [FindAgent](https://findagent.cloud) marketplace. Pick the
+Working, copyable starting points for the [FindAgent](https://findagent.cloud) store. Pick the
 lightest kind that is honest:
 
 | Variant | Kind | Folder |

@@ -4,7 +4,7 @@ This file is the single source of the assistant entry files of this repository; 
 `CONVENTIONS.md`, `.aider.conf.yml`, `.github/copilot-instructions.md` and `.cursor/rules/` are generated from it by
 `python scripts/build_adapters.py` (CI runs it with `--check`). Edit this file, never those.
 
-You were pointed at this repo to produce a **code agent** for the FindAgent marketplace. Work like this.
+You were pointed at this repo to produce a **code agent** for the FindAgent store. Work like this.
 
 1. **Pick one variant** and treat its folder as the repo root of the new agent: `node/` (Node 22 or 24,
    TypeScript, pnpm), `python/` (Python 3.13, pip) or `framework/` (Python 3.13, an agent loop in the shape of
